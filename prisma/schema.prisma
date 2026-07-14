@@ -1,0 +1,106 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Job {
+  id                 Int      @id @default(autoincrement())
+  sourceId           String   @unique @map("source_id")
+  dateFound          String   @map("date_found")
+  jobTitle           String?  @map("job_title")
+  company            String?
+  location           String?
+  locationType       String?  @map("location_type")
+  salaryDisplay      String?  @map("salary_display")
+  source             String?
+  jobUrl             String?  @map("job_url")
+  jobDescription     String?  @map("job_description")
+  cvPdfPath          String?  @map("cv_pdf_path")
+  cvUpdated          Int?     @default(0) @map("cv_updated")
+  atsScore           Int?     @map("ats_score")
+  atsFeedback        String?  @map("ats_feedback")
+  coverLetterPath    String?  @map("cover_letter_path")
+  hrEmail            String?  @map("hr_email")
+  hrName             String?  @map("hr_name")
+  hrTitle            String?  @map("hr_title")
+  coldMailDraftId    String?  @map("cold_mail_draft_id")
+  coldMailSent       Int?     @default(0) @map("cold_mail_sent")
+  coldMailSentDate   String?  @map("cold_mail_sent_date")
+  referralDraftId    String?  @map("referral_draft_id")
+  followUpDraftId    String?  @map("follow_up_draft_id")
+  applicationStatus  String   @default("Pending") @map("application_status")
+  notes              String?
+  createdAt          String   @default("") @map("created_at")
+
+  @@map("jobs")
+}
+
+model SdeChallenge {
+  id            Int     @id @default(autoincrement())
+  sourceId      String  @unique @map("source_id")
+  dateFound     String? @map("date_found")
+  challengeName String? @map("challenge_name")
+  company       String?
+  source        String?
+  applyLink     String? @map("apply_link")
+  deadline      String?
+  status        String  @default("Not Applied")
+  notes         String?
+
+  @@map("sde_challenges")
+}
+
+model FundingLead {
+  id                    Int     @id @default(autoincrement())
+  sourceId              String  @unique @map("source_id")
+  dateFound             String? @map("date_found")
+  company               String?
+  fundingAmount         String? @map("funding_amount")
+  stage                 String?
+  sector                String?
+  problemSolved         String? @map("problem_solved")
+  isIndian              Int?    @map("is_indian")
+  domain                String?
+  emailsFound           String? @map("emails_found")
+  linkedinPeopleSearch  String? @map("linkedin_people_search")
+  linkedinCompanyPage   String? @map("linkedin_company_page")
+  googleLinkedinSearch  String? @map("google_linkedin_search")
+  newsLink              String? @map("news_link")
+  status                String  @default("Not Contacted")
+  notes                 String?
+
+  @@map("funding_leads")
+}
+
+model AppState {
+  key   String @id
+  value String?
+
+  @@map("app_state")
+}
+
+model Settings {
+  key   String @id
+  value String?
+
+  @@map("settings")
+}
+
+model RejectedJob {
+  id           Int     @id @default(autoincrement())
+  sourceId     String  @map("source_id")
+  dateFound    String  @map("date_found")
+  jobTitle     String? @map("job_title")
+  company      String?
+  location     String?
+  source       String?
+  jobUrl       String? @map("job_url")
+  rejectReason String  @map("reject_reason")
+  createdAt    String  @default("") @map("created_at")
+
+  @@map("rejected_jobs")
+}

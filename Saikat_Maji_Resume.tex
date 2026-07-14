@@ -1,0 +1,126 @@
+\documentclass[a4paper,10pt]{article}
+
+\usepackage[T1]{fontenc}   % proper glyph encoding -> keeps ATS text-extraction clean (no broken ligatures)
+\usepackage{lmodern}
+\usepackage[hidelinks]{hyperref}
+\usepackage[left=0.55in, right=0.55in, top=0.28in, bottom=0.28in]{geometry}
+\usepackage{titlesec}
+\usepackage{enumitem}
+
+\pagestyle{empty}
+\setlength{\parskip}{0pt}
+\setlength{\parindent}{0pt}
+\renewcommand{\baselinestretch}{0.96}
+
+\titleformat{\section}{\large\bfseries}{}{0em}{}[\vspace{1pt}\hrule\vspace{1pt}]
+\titlespacing*{\section}{0pt}{4pt}{1pt}
+
+\setlist[itemize]{leftmargin=0.16in, itemsep=0pt, parsep=0pt, topsep=0pt, partopsep=0pt}
+
+% two-line heading: Title ..... Date  /  Subtitle ..... Location
+\newcommand{\heading}[4]{%
+  \noindent\textbf{#1}\hfill\textbf{\small #2}\\
+  \textit{\small #3}\hfill\textit{\small #4}\\[0pt]
+}
+% one-line heading: Title ..... RightSide   (for entries with no separate subtitle line)
+\newcommand{\headingOne}[2]{%
+  \noindent\textbf{#1}\hfill\small #2\\[0pt]
+}
+% bare heading: Title only, no right side (used for the two undated entries)
+\newcommand{\headingBare}[1]{%
+  \noindent\textbf{#1}\\[0pt]
+}
+
+\begin{document}
+
+% ---------- HEADER ----------
+\begin{center}
+  {\LARGE \bfseries SAIKAT MAJI}\\[3pt]
+  \small
+  +91-8509233422 ~$|$~
+  \href{mailto:Saikatmaji200@gmail.com}{Saikatmaji200@gmail.com} ~$|$~
+  \href{http://www.linkedin.com/in/saikat-maji-}{linkedin.com/in/saikat-maji-} ~$|$~
+  \href{https://github.com/GwSaikat}{github.com/GwSaikat} ~$|$~
+  \href{https://leetcode.com/u/Alpha7679/}{leetcode.com/Alpha7679}
+  % TODO(Saikat): your LinkedIn link ends in a bare hyphen and is broken/truncated - replace with your real profile URL before sending this out
+\end{center}
+\vspace{-7pt}
+
+% ---------- SUMMARY ----------
+\section*{Summary}
+Computer Science graduate and full-stack developer skilled in building production-style MERN applications, real-time systems, and AI-integrated features with LangChain and RAG. Proficient in React.js, Node.js/Express.js, REST API design, and core CS fundamentals (DSA, OOP, DBMS, System Design). Seeking a \textbf{MERN Stack Developer} / Software Engineer role.
+
+% ---------- TECHNICAL SKILLS ----------
+\section*{Technical Skills}
+\begin{itemize}
+  \item \textbf{Languages:} JavaScript (ES6+), TypeScript, C++, SQL, HTML, CSS
+  \item \textbf{Frontend / Backend:} React.js, Next.js ~$|$~ Node.js, Express.js, REST APIs, WebSocket
+  \item \textbf{AI / LLM:} LangChain, RAG, AI Integration (OpenAI API)
+  \item \textbf{Databases \& Infra / Auth:} MongoDB, Redis, Docker (Basics) ~$|$~ JWT, bcrypt, RBAC
+  \item \textbf{Dev Tools \& Deployment:} Git, GitHub, Postman, CI/CD (Vercel/Render auto-deploy on push), Vercel, Netlify, Render
+  % ^ Postman + CI/CD added here. Kafka and AWS deliberately left out - see chat note before adding them yourself.
+  \item \textbf{Core CS:} Data Structures \& Algorithms, OOP, DBMS, System Design, Operating Systems
+\end{itemize}
+
+% ---------- EXPERIENCE ----------
+\section*{Experience}
+
+\heading{Freelance Full-Stack Developer}{2025 -- Present}{Self-Employed}{Remote}
+\begin{itemize}
+  \item Designed and deployed full-stack management systems for two clients (a gym and a diagnostic center), from initial requirements through production launch.
+  \item Built responsive, role-based web apps that digitized scheduling, client records, and daily operations, replacing manual processes.
+  \item Owned the full development lifecycle -- requirements, architecture, development, testing, and deployment -- while handling client communication directly.
+\end{itemize}
+
+\headingBare{Virtual Internship -- Thiranex (Full-Stack Development)}
+% TODO(Saikat): add a start/end date range here (e.g. "Mar 2025 -- May 2025") - undated entries are harder for ATS to parse into your timeline
+\begin{itemize}
+  \item Built a Task Management Application enabling task creation, assignment, and status tracking for teams.
+  \item Developed an E-Commerce Web Application with product browsing, cart, and order management.
+  \item Created a Blog Platform with Comments, including content publishing and threaded discussions.
+\end{itemize}
+
+\headingBare{Software Engineering Job Simulation -- Forage}
+% TODO(Saikat): add a completion date here too, same reason as above
+\begin{itemize}
+  \item Completed a virtual job simulation performing realistic software engineering tasks for a Y Combinator--style startup application.
+  \item Implemented frontend improvements from user feedback and shipped new backend features.
+  \item Analyzed product and feature releases to evaluate user impact and guide development decisions.
+\end{itemize}
+
+% ---------- PROJECTS ----------
+\section*{Projects}
+
+\headingOne{FlowForge -- Real-Time Critical Path Orchestration Engine}{\href{https://github.com/Gwsaikat/FlowForge}{GitHub} ~$|$~ \href{https://client-one-bay-37.vercel.app/}{Live Demo}}
+\begin{itemize}
+  \item Engineered a real-time CPM engine modeling projects as dependency graphs, implementing topological sort, DFS cycle detection, and CPM forward/backward-pass algorithms from scratch.
+  \item Integrated LangChain and the OpenAI API for AI-driven features, including an automated standup-brief generator and a semantic dependency detector for hidden task relationships.
+  \item Built a real-time layer with Socket.io/WebSocket, Express.js, and Redis broadcasting graph updates within milliseconds; deployed on Render/Vercel with MongoDB Atlas.
+\end{itemize}
+
+\headingOne{TrackChat -- Real-Time Chat \& Device Tracking App (In Progress)}{MERN, Socket.io, WebSocket}
+\begin{itemize}
+  \item Building a real-time chat app with live device-location tracking via Socket.io, WebSocket, and the HTML5 Geolocation API, rendered on an interactive Leaflet.js map.
+  \item Architecting an event-driven Node.js/Express.js backend with MongoDB for message persistence, read receipts, typing indicators, and group chat.
+  \item Implementing JWT refresh-token rotation with a mobile-first React.js frontend using Context API and lazy loading.
+\end{itemize}
+
+\headingOne{Banking System -- Full-Stack Banking Application}{\href{https://github.com/Gwsaikat/Banking-System}{GitHub} ~$|$~ \href{https://banking-system-sepia.vercel.app}{Live Demo}}
+\begin{itemize}
+  \item Engineered a full-stack banking application with a React.js frontend and RESTful Express.js/Node.js API to handle core banking operations such as accounts and transactions.
+  \item Structured the codebase into independently deployable frontend and backend modules with isolated build pipelines.
+  \item Deployed a unified pipeline hosting the backend on Render and frontend on Vercel, enabling continuous delivery from a single repo.
+\end{itemize}
+
+% ---------- EDUCATION ----------
+\section*{Education}
+\heading{JIS University}{Aug 2022 -- May 2026}{Bachelor of Technology in Computer Science and Engineering}{Kolkata, India}
+
+% ---------- CERTIFICATIONS ----------
+\section*{Certifications}
+\begin{itemize}
+  \item Cisco Certified Network Associate -- Collaboration (CCNA-C), Simplilearn -- Jul 2024
+  \item Generative AI for Developers (Advanced), Google Skills -- In Progress
+\end{itemize}
+
+\end{document}
