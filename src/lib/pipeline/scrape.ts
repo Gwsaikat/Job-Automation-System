@@ -16,6 +16,25 @@ import { filterJobByLocation, filterJobByTechFit } from './filter';
 import { runCVPipeline } from '../cv/pipeline';
 import { runOutreachPipeline } from '../outreach/pipeline';
 
+// ---- BUG #5 FIX: Semaphore to limit concurrent CV+Outreach processing ----
+export class Semaphore {
+  private running = 0;
+  private queue: (() => void)[] = [];
+  constructor(private max: number) {}
+  async acquire() {
+    if (this.running >= this.max) {
+      await new Promise<void>((resolve) => this.queue.push(resolve));
+    }
+    this.running++;
+  }
+  release() {
+    this.running--;
+    const next = this.queue.shift();
+    if (next) next();
+  }
+}
+export const jobProcessingSemaphore = new Semaphore(2);
+
 // ---- Deduplication (Section 4.5) ----
 
 async function getExistingSourceIds(): Promise<Set<string>> {
@@ -193,103 +212,8 @@ export async function runDailyScrapePipeline(): Promise<PipelineStats> {
       continue;
     }
 
-    // Location + salary filter (Section 4.6)
-    const filterResult = filterJobByLocation(rawJob);
-
-    if (!filterResult.passed) {
-      // Log rejection for skills gap analysis (Section 7.3)
-      try {
-        await prisma.rejectedJob.create({
-          data: {
-            sourceId: rawJob.sourceId,
-            dateFound: today,
-            jobTitle: rawJob.title,
-            company: rawJob.company,
-            location: rawJob.location,
-            source: rawJob.source,
-            jobUrl: rawJob.url,
-            rejectReason: filterResult.rejectReason || 'Failed location/salary filter',
-            createdAt: new Date().toISOString(),
-          },
-        });
-      } catch {
-        // Ignore insert errors for rejected jobs
-      }
-      existingIds.add(rawJob.sourceId);
-      stats.jobsRejected++;
-      continue;
-    }
-
-    // AI Tech Fit Filter
-    const techFitResult = await filterJobByTechFit(rawJob);
-    if (!techFitResult.passed) {
-      try {
-        await prisma.rejectedJob.create({
-          data: {
-            sourceId: rawJob.sourceId,
-            dateFound: today,
-            jobTitle: rawJob.title,
-            company: rawJob.company,
-            location: rawJob.location,
-            source: rawJob.source,
-            jobUrl: rawJob.url,
-            rejectReason: techFitResult.rejectReason || 'Failed AI tech fit filter',
-            createdAt: new Date().toISOString(),
-          },
-        });
-      } catch {}
-      existingIds.add(rawJob.sourceId);
-      stats.jobsRejected++;
-      continue;
-    }
-
-    // Insert the job into the database
-    let insertedJobId: number | null = null;
-    try {
-      const inserted = await prisma.job.create({
-        data: {
-          sourceId: rawJob.sourceId,
-          dateFound: today,
-          jobTitle: rawJob.title,
-          company: rawJob.company,
-          location: rawJob.location,
-          locationType: filterResult.category,
-          salaryDisplay: filterResult.salaryDisplay,
-          source: rawJob.source,
-          jobUrl: rawJob.url,
-          jobDescription: rawJob.description,
-          createdAt: new Date().toISOString(),
-        },
-      });
-      insertedJobId = inserted.id;
-      stats.jobsPassed++;
-      existingIds.add(rawJob.sourceId);
-    } catch (err) {
-      if (String(err).includes('Unique constraint')) {
-        stats.duplicatesSkipped++;
-      } else {
-        console.error('[Pipeline] Job insert error:', err);
-        stats.errors.push(`Job insert error: ${rawJob.title} - ${err}`);
-      }
-    }
-
-    // Automatically trigger CV and Outreach pipelines for this new job asynchronously
-    if (insertedJobId) {
-      const jobId = insertedJobId;
-      setTimeout(async () => {
-        try {
-          console.log(`[Pipeline] Auto-triggering CV and Outreach for Job ${jobId}`);
-          await runCVPipeline(jobId);
-          await runOutreachPipeline(jobId);
-          await prisma.job.update({
-            where: { id: jobId },
-            data: { applicationStatus: 'Applied' } // Automatically move to applied once processed
-          });
-        } catch (error) {
-          console.error(`[Pipeline] Auto-processing failed for Job ${jobId}:`, error);
-        }
-      }, 0);
-    }
+    existingIds.add(rawJob.sourceId);
+    await processAndInsertJob(rawJob, stats);
   }
 
   console.log(`[Pipeline] Complete! Fetched: ${stats.totalFetched}, Passed: ${stats.jobsPassed}, Rejected: ${stats.jobsRejected}, Challenges: ${stats.challengesInserted}, Dupes: ${stats.duplicatesSkipped}`);
@@ -303,3 +227,131 @@ export async function runDailyScrapePipeline(): Promise<PipelineStats> {
 
   return stats;
 }
+
+export async function processAndInsertJob(rawJob: RawJob, stats?: PipelineStats): Promise<void> {
+  const today = new Date().toISOString().split('T')[0];
+
+  // Location + salary filter (Section 4.6)
+  const filterResult = filterJobByLocation(rawJob);
+
+  if (!filterResult.passed) {
+    // Log rejection for skills gap analysis (Section 7.3)
+    try {
+      await prisma.rejectedJob.create({
+        data: {
+          sourceId: rawJob.sourceId,
+          dateFound: today,
+          jobTitle: rawJob.title,
+          company: rawJob.company,
+          location: rawJob.location,
+          source: rawJob.source,
+          jobUrl: rawJob.url,
+          rejectReason: filterResult.rejectReason || 'Failed location/salary filter',
+          createdAt: new Date().toISOString(),
+        },
+      });
+    } catch {
+      // Ignore insert errors for rejected jobs
+    }
+    if (stats) {
+      stats.jobsRejected++;
+    }
+    return;
+  }
+
+  // AI Tech Fit Filter
+  const techFitResult = await filterJobByTechFit(rawJob);
+  if (!techFitResult.passed) {
+    try {
+      await prisma.rejectedJob.create({
+        data: {
+          sourceId: rawJob.sourceId,
+          dateFound: today,
+          jobTitle: rawJob.title,
+          company: rawJob.company,
+          location: rawJob.location,
+          source: rawJob.source,
+          jobUrl: rawJob.url,
+          rejectReason: techFitResult.rejectReason || 'Failed AI tech fit filter',
+          createdAt: new Date().toISOString(),
+        },
+      });
+    } catch {}
+    if (stats) {
+      stats.jobsRejected++;
+    }
+    return;
+  }
+
+  // Insert the job into the database
+  let insertedJobId: number | null = null;
+  try {
+    const inserted = await prisma.job.create({
+      data: {
+        sourceId: rawJob.sourceId,
+        dateFound: today,
+        jobTitle: rawJob.title,
+        company: rawJob.company,
+        location: rawJob.location,
+        locationType: filterResult.category,
+        salaryDisplay: filterResult.salaryDisplay,
+        source: rawJob.source,
+        jobUrl: rawJob.url,
+        jobDescription: rawJob.description,
+        createdAt: new Date().toISOString(),
+      },
+    });
+
+    insertedJobId = inserted.id;
+    if (stats) {
+      stats.jobsPassed++;
+    }
+    console.log(`[Pipeline] Job INSERTED: ${rawJob.title} at ${rawJob.company} (id=${insertedJobId})`);
+  } catch (err) {
+    if (String(err).includes('Unique constraint')) {
+      if (stats) {
+        stats.duplicatesSkipped++;
+      }
+    } else {
+      console.error('[Pipeline] Job insert error:', err);
+      if (stats) {
+        stats.errors.push(`Job insert error: ${rawJob.title} - ${err}`);
+      }
+    }
+    return;
+  }
+
+  // Trigger CV+Outreach with semaphore cap and error recording
+  if (insertedJobId) {
+    const jobId = insertedJobId;
+    setTimeout(async () => {
+      await jobProcessingSemaphore.acquire();
+      try {
+        console.log(`[Pipeline] Auto-triggering CV and Outreach for Job ${jobId}`);
+        await runCVPipeline(jobId);
+        await runOutreachPipeline(jobId);
+        await prisma.job.update({
+          where: { id: jobId },
+          data: {
+            applicationStatus: 'Applied',
+            processingError: null,
+            processedAt: new Date().toISOString(),
+          },
+        });
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        console.error(`[Pipeline] Auto-processing failed for Job ${jobId}:`, error);
+        await prisma.job.update({
+          where: { id: jobId },
+          data: {
+            processingError: message.slice(0, 500),
+            processedAt: new Date().toISOString(),
+          },
+        }).catch(() => {}); // don't let a logging failure mask the original error
+      } finally {
+        jobProcessingSemaphore.release();
+      }
+    }, 0);
+  }
+}
+

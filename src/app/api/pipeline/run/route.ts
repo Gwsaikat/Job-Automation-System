@@ -4,7 +4,7 @@
 // ============================================
 
 import { NextRequest, NextResponse } from 'next/server';
-import { runDailyScrapePipeline } from '@/lib/pipeline/scrape';
+import { runDailyScrapePipeline, jobProcessingSemaphore } from '@/lib/pipeline/scrape';
 import { runFundingPipeline } from '@/lib/funding/rss';
 import { runFollowUpCheck } from '@/lib/reporting/follow-up';
 import { runCVPipeline } from '@/lib/cv/pipeline';
@@ -21,18 +21,31 @@ export async function POST(request: NextRequest) {
       console.log(`[API] Manual trigger: CV + Outreach for job ${jobId}`);
       
       // We run this asynchronously so we don't timeout the request
-      // In a real production app, you'd use a queue system (BullMQ etc)
-      // but for this local single-user app, running in the background is fine
       setTimeout(async () => {
+        await jobProcessingSemaphore.acquire();
         try {
           await runCVPipeline(jobId);
           await runOutreachPipeline(jobId);
           await prisma.job.update({
             where: { id: jobId },
-            data: { applicationStatus: 'Applied' } // Mark as applied once draft is ready
+            data: {
+              applicationStatus: 'Applied',
+              processingError: null,
+              processedAt: new Date().toISOString(),
+            },
           });
         } catch (error) {
+          const message = error instanceof Error ? error.message : String(error);
           console.error(`[API] Background job pipeline failed for ${jobId}:`, error);
+          await prisma.job.update({
+            where: { id: jobId },
+            data: {
+              processingError: message.slice(0, 500),
+              processedAt: new Date().toISOString(),
+            },
+          }).catch(() => {});
+        } finally {
+          jobProcessingSemaphore.release();
         }
       }, 0);
 

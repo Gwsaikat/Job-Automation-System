@@ -25,27 +25,42 @@ export async function scrapeUnstop(): Promise<RawChallenge[]> {
   const url =
     'https://unstop.com/api/public/opportunity/search-result?opportunity=competitions&per_page=20&oppstatus=open&title=SDE hiring challenge software engineer';
 
-  const response = await fetch(url, {
-    headers: {
-      'User-Agent': 'Mozilla/5.0 (compatible; JobBot/1.0)',
-    },
-  });
+  try {
+    const response = await fetch(url, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (compatible; JobBot/1.0)',
+      },
+    });
 
-  if (!response.ok) {
-    throw new Error(`Unstop returned ${response.status}: ${await response.text()}`);
+    if (!response.ok) {
+      console.warn(`[Unstop] returned ${response.status}, skipping`);
+      return [];
+    }
+
+    const data: UnstopResponse = await response.json();
+    const opportunities = data?.data?.data || [];
+    
+    // Filter out past deadlines
+    const now = new Date();
+
+    return opportunities
+      .filter(item => {
+        if (!item.end_date) return true;
+        return new Date(item.end_date) >= now;
+      })
+      .map((item): RawChallenge => ({
+        sourceId: `unstop_${item.id}`,
+        challengeName: item.title || '',
+        company: item.organization?.name || 'Unknown',
+        source: 'Unstop',
+        // Unstop API now provides full SEO URLs (starting with http/https). Use it directly if present.
+        applyLink: item.seo_url && item.seo_url.startsWith('http')
+          ? item.seo_url
+          : `https://unstop.com/o/${item.seo_url || item.id}`,
+        deadline: item.end_date || '',
+      }));
+  } catch (error) {
+    console.warn(`[Unstop] network error, skipping:`, error);
+    return [];
   }
-
-  const data: UnstopResponse = await response.json();
-  const opportunities = data?.data?.data || [];
-
-  return opportunities.map((item): RawChallenge => ({
-    sourceId: `unstop_${item.id}`,
-    challengeName: item.title || '',
-    company: item.organization?.name || 'Unknown',
-    source: 'Unstop',
-    applyLink: item.seo_url
-      ? `https://unstop.com/${item.seo_url}`
-      : `https://unstop.com/competitions/${item.id}`,
-    deadline: item.end_date || '',
-  }));
 }

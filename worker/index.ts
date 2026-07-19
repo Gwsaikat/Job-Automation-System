@@ -4,23 +4,46 @@
 // Uses node-cron for all scheduled tasks
 // ============================================
 
+// Load env variables FIRST — from .env (not .env.local)
+import * as dotenv from 'dotenv';
+import * as path from 'path';
+dotenv.config({ path: path.resolve(process.cwd(), '.env') });
+
 import cron from 'node-cron';
-import { runDailyScrapePipeline } from '../src/lib/pipeline/scrape';
+import { RawJob } from '../src/lib/scrapers/types';
+import { runDailyScrapePipeline, processAndInsertJob } from '../src/lib/pipeline/scrape';
 import { pollTelegram } from '../src/lib/scrapers/telegram';
-import { filterJobByLocation } from '../src/lib/pipeline/filter';
 import { runFundingPipeline } from '../src/lib/funding/rss';
 import { runFollowUpCheck } from '../src/lib/reporting/follow-up';
 import { runWeeklyDigest } from '../src/lib/reporting/digest';
 import { runSkillsGapReport } from '../src/lib/reporting/skills-gap';
-
-// Load env variables
-import * as dotenv from 'dotenv';
-dotenv.config({ path: '.env.local' });
+import prisma from '../src/lib/db';
 
 console.log('========================================');
 console.log('  Job Automation System — Background Worker');
 console.log('  Started at:', new Date().toISOString());
 console.log('========================================');
+
+// ---- BUG #1 FIX: Environment sanity check ----
+const requiredKeys = [
+  'ADZUNA_APP_ID', 'RAPIDAPI_KEY', 'SERPER_API_KEY',
+  'OPENROUTER_API_KEY', 'GROQ_API_KEY1', 'APOLLO_API_KEY', 'TELEGRAM_BOT_TOKEN',
+];
+console.log('[Worker] Environment check:');
+for (const key of requiredKeys) {
+  const val = process.env[key];
+  console.log(`  ${key}: ${val ? '✅ loaded (' + val.slice(0, 6) + '...)' : '❌ MISSING'}`);
+}
+
+try {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const templateModule = require('../src/lib/cv/template');
+  new Function('return `' + templateModule.MASTER_CV_HTML.replace(/\\/g, '\\\\').replace(/`/g, '\\`').replace(/\${/g, '\\${') + '`');
+  new Function('return `' + templateModule.MASTER_CV_LATEX.replace(/\\/g, '\\\\').replace(/`/g, '\\`').replace(/\${/g, '\\${') + '`');
+  console.log('[Worker] ✅ CV templates validated successfully');
+} catch (e) {
+  console.error('[Worker] ❌ CV templates validation failed:', e);
+}
 
 // ---- Helper to wrap cron jobs with error handling ----
 
@@ -67,17 +90,26 @@ safeCron('Skills Gap Report', '0 10 * * 0', async () => {
   await runSkillsGapReport();
 });
 
-// Every 3 minutes → Telegram Poll (Section 4.7)
+// Every 3 minutes → Telegram Poll (Section 4.7) — BUG #3 FIXED
 safeCron('Telegram Poll', '*/3 * * * *', async () => {
   const jobs = await pollTelegram();
   if (jobs.length > 0) {
-    console.log(`[Worker] Telegram: ${jobs.length} new jobs extracted`);
-    // Process through the same location/salary pipeline
+    console.log(`[Worker] Telegram: ${jobs.length} new jobs extracted — processing...`);
+
+    // Check existing source IDs to avoid re-processing
+    const existing = await prisma.job.findMany({ select: { sourceId: true } });
+    const rejectedExisting = await prisma.rejectedJob.findMany({ select: { sourceId: true } });
+    const existingIds = new Set([
+      ...existing.map(j => j.sourceId),
+      ...rejectedExisting.map(r => r.sourceId),
+    ]);
+
     for (const job of jobs) {
-      const result = filterJobByLocation(job);
-      if (result.passed) {
-        console.log(`[Worker] Telegram job passed: ${job.title} at ${job.company}`);
+      if (existingIds.has(job.sourceId)) {
+        console.log(`[Worker] Telegram job already processed, skipping: ${job.title}`);
+        continue;
       }
+      await processAndInsertJob(job);
     }
   }
 });

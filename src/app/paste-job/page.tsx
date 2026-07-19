@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ClipboardPaste, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { AlertCircle, CheckCircle2 } from 'lucide-react';
 
 export default function PasteJobPage() {
   const [text, setText] = useState('');
@@ -38,34 +38,47 @@ export default function PasteJobPage() {
   };
 
   return (
-    <div className="p-8 max-w-4xl mx-auto space-y-6 animate-in fade-in duration-500">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight mb-2">Manual Paste</h1>
-        <p className="text-neutral-400">Paste job postings from WhatsApp, Telegram, or email here.</p>
+    <div className="p-12 max-w-3xl mx-auto space-y-6 select-none animate-in fade-in duration-300">
+      
+      {/* Notion Breadcrumbs */}
+      <div className="text-xs text-neutral-500 flex items-center gap-1.5 font-normal">
+        <span>Saikat's Workspace</span>
+        <span>/</span>
+        <span className="text-neutral-400 font-medium">📝 Manual Paste</span>
       </div>
 
-      <Card className="border-neutral-800 bg-neutral-900/50">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <ClipboardPaste className="w-5 h-5 text-blue-400" />
-            Paste Job Posting
+      {/* Page Header */}
+      <div className="space-y-1">
+        <h1 className="text-3xl font-bold tracking-tight text-neutral-100 flex items-center gap-3">
+          <span>📝</span> Manual Job Import
+        </h1>
+        <p className="text-neutral-400 text-sm">
+          Paste unstructured job postings from WhatsApp, Telegram, or email messages here.
+        </p>
+      </div>
+
+      {/* Paste Card Form */}
+      <Card className="border-[#2f2f2f] bg-[#202020] rounded shadow-none">
+        <CardHeader className="pb-3 border-b border-[#2f2f2f]">
+          <CardTitle className="text-xs font-bold text-neutral-400 uppercase tracking-wider flex items-center gap-1.5">
+            📋 Raw Job Posting Text
           </CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="pt-4">
           <form onSubmit={handleSubmit} className="space-y-4">
             <textarea
-              className="w-full h-64 p-4 rounded-xl bg-neutral-950 border border-neutral-800 text-neutral-200 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none font-mono text-sm"
-              placeholder="Paste the full text of the message here..."
+              className="w-full h-56 p-4 rounded bg-[#191919] border border-[#2f2f2f] text-neutral-200 focus:outline-none focus:ring-1 focus:ring-blue-500 resize-none font-mono text-xs leading-relaxed"
+              placeholder="Paste raw text, JD description or message here..."
               value={text}
               onChange={(e) => setText(e.target.value)}
               disabled={loading}
             />
             
-            <div className="flex justify-between items-center">
-              <div className="text-xs text-neutral-500">
-                The AI will extract the details, run the location/salary filter, and add it to the database if it passes.
+            <div className="flex justify-between items-center flex-wrap gap-2 pt-2">
+              <div className="text-[11px] text-neutral-500 max-w-md">
+                The AI pipeline will extract the job title, company, location, and description, check tech-fit eligibility, and insert it into your workspace database automatically.
               </div>
-              <Button type="submit" disabled={loading || text.trim().length === 0} className="px-8">
+              <Button type="submit" disabled={loading || text.trim().length === 0} className="h-8 px-5 text-xs bg-blue-650 hover:bg-blue-700 text-white font-medium rounded shadow-none">
                 {loading ? 'Processing...' : 'Submit Job'}
               </Button>
             </div>
@@ -73,26 +86,27 @@ export default function PasteJobPage() {
         </CardContent>
       </Card>
 
+      {/* Result Callouts */}
       {result && (
-        <div className="mt-8">
+        <div className="space-y-3">
           {result.error && (
-            <div className="p-4 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 flex items-start gap-3">
-              <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
+            <div className="notion-callout border-red-900/30 bg-red-950/10 text-red-400 text-xs">
+              <AlertCircle className="w-4 h-4 shrink-0" />
               <div>
-                <h4 className="font-semibold mb-1">Error processing job</h4>
-                <p className="text-sm">{result.error}</p>
+                <h4 className="font-semibold mb-0.5">Error processing job posting</h4>
+                <p className="text-neutral-400">{result.error}</p>
               </div>
             </div>
           )}
 
           {result.status === 'rejected' && (
-            <div className="p-4 rounded-lg bg-orange-500/10 border border-orange-500/20 text-orange-400 flex items-start gap-3">
-              <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
+            <div className="notion-callout border-orange-900/30 bg-orange-950/10 text-orange-400 text-xs">
+              <AlertCircle className="w-4 h-4 shrink-0" />
               <div>
-                <h4 className="font-semibold mb-1">Job Rejected (Failed Filter)</h4>
-                <p className="text-sm mb-2">{result.reason}</p>
+                <h4 className="font-semibold mb-1">Job Rejected (Failed Filter Criteria)</h4>
+                <p className="text-neutral-400 mb-2 leading-relaxed">{result.reason}</p>
                 {result.extracted && (
-                  <div className="text-xs bg-neutral-950 p-3 rounded text-neutral-400 border border-neutral-800/50 mt-2">
+                  <div className="text-[11px] bg-[#191919] p-3 rounded text-neutral-400 border border-[#2f2f2f]/60 font-mono space-y-1">
                     <p><strong>Title:</strong> {result.extracted.title}</p>
                     <p><strong>Company:</strong> {result.extracted.company}</p>
                     <p><strong>Location:</strong> {result.extracted.location}</p>
@@ -104,12 +118,12 @@ export default function PasteJobPage() {
           )}
 
           {result.status === 'accepted' && (
-            <div className="p-4 rounded-lg bg-green-500/10 border border-green-500/20 text-green-400 flex items-start gap-3">
-              <CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5" />
+            <div className="notion-callout border-green-900/30 bg-green-950/10 text-green-400 text-xs">
+              <CheckCircle2 className="w-4 h-4 shrink-0" />
               <div>
                 <h4 className="font-semibold mb-1">Job Accepted and Saved!</h4>
-                <p className="text-sm mb-2">Category: {result.category}</p>
-                <div className="text-xs bg-neutral-950 p-3 rounded text-neutral-400 border border-neutral-800/50 mt-2">
+                <p className="text-neutral-400 mb-2">Category: {result.category}</p>
+                <div className="text-[11px] bg-[#191919] p-3 rounded text-neutral-400 border border-[#2f2f2f]/60 font-mono space-y-1">
                   <p><strong>Title:</strong> {result.job.jobTitle}</p>
                   <p><strong>Company:</strong> {result.job.company}</p>
                   <p><strong>Location:</strong> {result.job.location}</p>

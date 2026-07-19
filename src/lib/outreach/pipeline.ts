@@ -19,6 +19,7 @@ export interface OutreachResult {
   linkedinPeopleSearch: string | null;
   linkedinCompanyPage: string | null;
   googleLinkedinSearch: string | null;
+  linkedinContactUrl: string | null;
 }
 
 export async function runOutreachPipeline(jobId: number): Promise<OutreachResult> {
@@ -40,6 +41,7 @@ export async function runOutreachPipeline(jobId: number): Promise<OutreachResult
     linkedinPeopleSearch: null,
     linkedinCompanyPage: null,
     googleLinkedinSearch: null,
+    linkedinContactUrl: null,
   };
 
   // Step 1: Apollo lookup (Section 6.1)
@@ -50,13 +52,19 @@ export async function runOutreachPipeline(jobId: number): Promise<OutreachResult
     result.hrName = contact.name;
     result.hrEmail = contact.email;
     result.hrTitle = contact.title;
+    result.linkedinContactUrl = contact.linkedinUrl || null;
   }
 
-  // Store fallback links if no contacts found
+  // Store fallback links
   if (apolloResult.fallbackLinks) {
     result.linkedinPeopleSearch = apolloResult.fallbackLinks.linkedinPeopleSearch;
     result.linkedinCompanyPage = apolloResult.fallbackLinks.linkedinCompanyPage;
     result.googleLinkedinSearch = apolloResult.fallbackLinks.googleLinkedinSearch;
+  } else {
+    // Generate them anyway as convenience search links
+    result.linkedinPeopleSearch = `https://www.linkedin.com/search/results/people/?keywords=${encodeURIComponent(company + ' recruiter hiring India')}`;
+    result.linkedinCompanyPage = `https://www.linkedin.com/search/results/companies/?keywords=${encodeURIComponent(company)}`;
+    result.googleLinkedinSearch = `https://www.google.com/search?q=site:linkedin.com+"${encodeURIComponent(company)}"+recruiter+OR+hiring+India`;
   }
 
   // Step 2: Psychological hook (Section 6.2)
@@ -141,6 +149,10 @@ Return ONLY the skill name, nothing else.`;
       hrTitle: result.hrTitle,
       coldMailDraftId: result.coldMailDraftId,
       referralDraftId: result.referralDraftId,
+      linkedinPeopleSearch: result.linkedinPeopleSearch,
+      linkedinCompanyPage: result.linkedinCompanyPage,
+      googleLinkedinSearch: result.googleLinkedinSearch,
+      linkedinContactUrl: result.linkedinContactUrl,
     },
   });
 

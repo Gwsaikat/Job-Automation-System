@@ -2,8 +2,7 @@
 import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Mail, CheckCircle2, XCircle, Database, Search, Bot, Play } from 'lucide-react';
+import { CheckCircle2, XCircle } from 'lucide-react';
 
 export default function SettingsPage() {
   const [settings, setSettings] = useState<any>(null);
@@ -76,50 +75,62 @@ export default function SettingsPage() {
     }
   };
 
-  if (loading) return <div className="p-8 text-neutral-500">Loading settings...</div>;
+  if (loading) return <div className="p-12 text-neutral-500 text-xs">⏳ Loading Settings...</div>;
 
   return (
-    <div className="p-8 max-w-[1200px] mx-auto space-y-8 animate-in fade-in duration-500">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight mb-2">Settings</h1>
-        <p className="text-neutral-400">Configure API keys, connect Gmail, and edit your master CV template.</p>
+    <div className="p-12 max-w-5xl mx-auto space-y-6 select-none animate-in fade-in duration-300">
+      
+      {/* Notion Breadcrumbs */}
+      <div className="text-xs text-neutral-500 flex items-center gap-1.5 font-normal">
+        <span>Saikat's Workspace</span>
+        <span>/</span>
+        <span className="text-neutral-400 font-medium">⚙️ Settings</span>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2">
+      {/* Page Header */}
+      <div className="space-y-1">
+        <h1 className="text-3xl font-bold tracking-tight text-neutral-100 flex items-center gap-3">
+          <span>⚙️</span> Settings
+        </h1>
+        <p className="text-neutral-400 text-sm">
+          Manage API keys, Gmail credentials, manual pipeline execution, and customize your master CV templates.
+        </p>
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-2">
         {/* Gmail Integration */}
-        <Card className="border-neutral-800 bg-neutral-900/50">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <Mail className="w-5 h-5 text-purple-400" />
-              Gmail Integration
+        <Card className="border-[#2f2f2f] bg-[#202020] rounded shadow-none">
+          <CardHeader className="pb-3 border-b border-[#2f2f2f]">
+            <CardTitle className="text-xs font-bold text-neutral-400 uppercase tracking-wider flex items-center gap-1.5">
+              ✉️ Gmail Integration
             </CardTitle>
-            <CardDescription className="text-neutral-400">Required for creating outreach drafts (never auto-sends).</CardDescription>
+            <CardDescription className="text-neutral-500 text-[11px] mt-0.5">Required to create automated job outreach drafts.</CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="pt-4">
             {settings.gmailConnected ? (
-              <div className="flex flex-col gap-4">
-                <div className="flex items-center gap-3 p-4 rounded-lg bg-green-500/10 border border-green-500/20 text-green-400">
-                  <CheckCircle2 className="w-5 h-5 shrink-0" />
+              <div className="space-y-3">
+                <div className="flex items-center gap-2 p-2.5 rounded bg-green-950/15 border border-green-800/20 text-green-400 text-xs">
+                  <CheckCircle2 className="w-4 h-4 shrink-0" />
                   <div>
-                    <h4 className="font-medium text-sm">Connected successfully</h4>
-                    <p className="text-xs mt-0.5 text-green-400/80">Authorized as: {settings.gmailEmail}</p>
+                    <h4 className="font-semibold text-xs">Connected</h4>
+                    <p className="text-[10px] text-green-400/80 mt-0.5">Account: {settings.gmailEmail}</p>
                   </div>
                 </div>
-                <Button onClick={connectGmail} variant="outline" className="w-full">
-                  Reconnect Gmail
+                <Button onClick={connectGmail} variant="outline" className="w-full h-8 text-xs bg-[#191919] border-[#2f2f2f] hover:bg-[#202020] text-neutral-300 rounded shadow-none font-normal">
+                  Reconnect Account
                 </Button>
               </div>
             ) : (
-              <div className="flex flex-col gap-4">
-                <div className="flex items-center gap-3 p-4 rounded-lg bg-orange-500/10 border border-orange-500/20 text-orange-400">
-                  <XCircle className="w-5 h-5 shrink-0" />
+              <div className="space-y-3">
+                <div className="flex items-center gap-2 p-2.5 rounded bg-orange-950/15 border border-orange-850/20 text-orange-400 text-xs">
+                  <XCircle className="w-4 h-4 shrink-0" />
                   <div>
-                    <h4 className="font-medium text-sm">Not connected</h4>
-                    <p className="text-xs mt-0.5 opacity-80">Outreach pipeline cannot create drafts.</p>
+                    <h4 className="font-semibold text-xs">Not connected</h4>
+                    <p className="text-[10px] opacity-80 mt-0.5">Outreach drafts will be skipped.</p>
                   </div>
                 </div>
-                <Button onClick={connectGmail} className="w-full bg-purple-600 hover:bg-purple-700 text-white">
-                  Connect Gmail
+                <Button onClick={connectGmail} className="w-full h-8 text-xs bg-purple-650 hover:bg-purple-700 text-white font-medium rounded shadow-none">
+                  Connect Gmail Account
                 </Button>
               </div>
             )}
@@ -127,39 +138,38 @@ export default function SettingsPage() {
         </Card>
 
         {/* API Key Status */}
-        <Card className="border-neutral-800 bg-neutral-900/50">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <Database className="w-5 h-5 text-blue-400" />
-              API Key Status
+        <Card className="border-[#2f2f2f] bg-[#202020] rounded shadow-none">
+          <CardHeader className="pb-3 border-b border-[#2f2f2f]">
+            <CardTitle className="text-xs font-bold text-neutral-400 uppercase tracking-wider flex items-center gap-1.5">
+              🔑 System API Keys
             </CardTitle>
-            <CardDescription className="text-neutral-400">Keys are loaded securely from .env.local</CardDescription>
+            <CardDescription className="text-neutral-500 text-[11px] mt-0.5">Keys loaded automatically from .env configuration.</CardDescription>
           </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 gap-y-3 text-sm">
+          <CardContent className="pt-4">
+            <div className="grid grid-cols-2 gap-y-2.5 text-xs">
               <div className="flex justify-between items-center pr-4">
-                <span className="text-neutral-300">OpenRouter</span>
-                {settings.apiKeys.openrouter ? <CheckCircle2 className="w-4 h-4 text-green-400" /> : <XCircle className="w-4 h-4 text-red-400" />}
+                <span className="text-neutral-400">OpenRouter API</span>
+                {settings.apiKeys.openrouter ? <CheckCircle2 className="w-3.5 h-3.5 text-green-400" /> : <XCircle className="w-3.5 h-3.5 text-red-400" />}
               </div>
               <div className="flex justify-between items-center pr-4">
-                <span className="text-neutral-300">Groq</span>
-                {settings.apiKeys.groq ? <CheckCircle2 className="w-4 h-4 text-green-400" /> : <XCircle className="w-4 h-4 text-red-400" />}
+                <span className="text-neutral-400">Groq API</span>
+                {settings.apiKeys.groq ? <CheckCircle2 className="w-3.5 h-3.5 text-green-400" /> : <XCircle className="w-3.5 h-3.5 text-red-400" />}
               </div>
               <div className="flex justify-between items-center pr-4">
-                <span className="text-neutral-300">Adzuna</span>
-                {settings.apiKeys.adzuna ? <CheckCircle2 className="w-4 h-4 text-green-400" /> : <XCircle className="w-4 h-4 text-red-400" />}
+                <span className="text-neutral-400">Adzuna Scraping</span>
+                {settings.apiKeys.adzuna ? <CheckCircle2 className="w-3.5 h-3.5 text-green-400" /> : <XCircle className="w-3.5 h-3.5 text-red-400" />}
               </div>
               <div className="flex justify-between items-center pr-4">
-                <span className="text-neutral-300">JSearch (RapidAPI)</span>
-                {settings.apiKeys.rapidApi ? <CheckCircle2 className="w-4 h-4 text-green-400" /> : <XCircle className="w-4 h-4 text-red-400" />}
+                <span className="text-neutral-400">JSearch API</span>
+                {settings.apiKeys.rapidApi ? <CheckCircle2 className="w-3.5 h-3.5 text-green-400" /> : <XCircle className="w-3.5 h-3.5 text-red-400" />}
               </div>
               <div className="flex justify-between items-center pr-4">
-                <span className="text-neutral-300">Serper.dev</span>
-                {settings.apiKeys.serper ? <CheckCircle2 className="w-4 h-4 text-green-400" /> : <XCircle className="w-4 h-4 text-red-400" />}
+                <span className="text-neutral-400">Serper Search</span>
+                {settings.apiKeys.serper ? <CheckCircle2 className="w-3.5 h-3.5 text-green-400" /> : <XCircle className="w-3.5 h-3.5 text-red-400" />}
               </div>
               <div className="flex justify-between items-center pr-4">
-                <span className="text-neutral-300">Apollo.io</span>
-                {settings.apiKeys.apollo ? <CheckCircle2 className="w-4 h-4 text-green-400" /> : <XCircle className="w-4 h-4 text-red-400" />}
+                <span className="text-neutral-400">Apollo.io Contact</span>
+                {settings.apiKeys.apollo ? <CheckCircle2 className="w-3.5 h-3.5 text-green-400" /> : <XCircle className="w-3.5 h-3.5 text-red-400" />}
               </div>
             </div>
           </CardContent>
@@ -167,67 +177,67 @@ export default function SettingsPage() {
       </div>
 
       {/* Manual Triggers */}
-      <Card className="border-neutral-800 bg-neutral-900/50">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <Play className="w-5 h-5 text-green-400" />
-            Manual Triggers
+      <Card className="border-[#2f2f2f] bg-[#202020] rounded shadow-none">
+        <CardHeader className="pb-3 border-b border-[#2f2f2f]">
+          <CardTitle className="text-xs font-bold text-neutral-400 uppercase tracking-wider flex items-center gap-1.5">
+            ⚡ Quick Pipeline Actions
           </CardTitle>
-          <CardDescription className="text-neutral-400">Trigger background pipelines on demand.</CardDescription>
+          <CardDescription className="text-neutral-500 text-[11px] mt-0.5">Run worker sync scripts immediately.</CardDescription>
         </CardHeader>
-        <CardContent className="flex gap-4">
-          <Button onClick={() => runPipeline('scrape')} variant="secondary" className="gap-2">
-            <Search className="w-4 h-4" /> Run Job Scraper Now
+        <CardContent className="pt-4 flex gap-3">
+          <Button onClick={() => runPipeline('scrape')} variant="outline" className="h-8 text-xs bg-[#191919] border-[#2f2f2f] hover:bg-[#202020] text-neutral-300 font-normal rounded gap-1.5 shadow-none">
+            🔍 Run Daily Job Scraper
           </Button>
-          <Button onClick={() => runPipeline('funding')} variant="secondary" className="gap-2">
-            <Bot className="w-4 h-4" /> Run Funding News Now
+          <Button onClick={() => runPipeline('funding')} variant="outline" className="h-8 text-xs bg-[#191919] border-[#2f2f2f] hover:bg-[#202020] text-neutral-300 font-normal rounded gap-1.5 shadow-none">
+            📈 Run Funding News Sync
           </Button>
         </CardContent>
       </Card>
 
       {/* Master CV Editor */}
-      <Card className="border-neutral-800 bg-neutral-900/50">
-        <CardHeader className="flex flex-row items-start justify-between">
+      <Card className="border-[#2f2f2f] bg-[#202020] rounded shadow-none">
+        <CardHeader className="pb-3 border-b border-[#2f2f2f] flex flex-row items-center justify-between flex-wrap gap-2">
           <div>
-            <CardTitle className="text-lg">Master CV Template</CardTitle>
-            <CardDescription className="text-neutral-400 mt-1 max-w-[600px]">
-              Choose your CV rendering engine. HTML uses Puppeteer, while LaTeX requires <code className="text-pink-400">pdflatex</code> installed locally on your system. Keep the AI_EDITABLE comments intact.
+            <CardTitle className="text-xs font-bold text-neutral-400 uppercase tracking-wider">📄 Master CV Templates</CardTitle>
+            <CardDescription className="text-neutral-500 text-[11px] mt-0.5">
+              Edit the baseline CV layout that the AI references to generate tailored CVs.
             </CardDescription>
-            <div className="flex gap-4 mt-4">
-              <button 
-                onClick={() => setCvType('html')}
-                className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-colors ${cvType === 'html' ? 'bg-blue-600 text-white' : 'bg-neutral-800 text-neutral-400 hover:bg-neutral-700'}`}
-              >
-                HTML Engine
-              </button>
-              <button 
-                onClick={() => setCvType('latex')}
-                className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-colors ${cvType === 'latex' ? 'bg-pink-600 text-white' : 'bg-neutral-800 text-neutral-400 hover:bg-neutral-700'}`}
-              >
-                LaTeX Engine
-              </button>
-            </div>
           </div>
-          <Button onClick={saveCvSettings} disabled={savingSettings} className="bg-blue-600 hover:bg-blue-700 text-white mt-2">
-            {savingSettings ? 'Saving...' : 'Save Changes'}
+          <Button onClick={saveCvSettings} disabled={savingSettings} className="h-8 px-5 text-xs bg-blue-650 hover:bg-blue-700 text-white font-medium rounded shadow-none">
+            {savingSettings ? 'Saving...' : 'Save Templates'}
           </Button>
         </CardHeader>
-        <CardContent>
+        <CardContent className="pt-4 space-y-4">
+          <div className="flex gap-2">
+            <button 
+              onClick={() => setCvType('html')}
+              className={`px-3 py-1 rounded text-xs font-normal border transition-colors ${cvType === 'html' ? 'bg-[#191919] border-[#2eaadc] text-neutral-100 font-medium' : 'bg-transparent border-[#2f2f2f] text-neutral-400 hover:bg-[#2c2c2c]'}`}
+            >
+              HTML Template
+            </button>
+            <button 
+              onClick={() => setCvType('latex')}
+              className={`px-3 py-1 rounded text-xs font-normal border transition-colors ${cvType === 'latex' ? 'bg-[#191919] border-[#2eaadc] text-neutral-100 font-medium' : 'bg-transparent border-[#2f2f2f] text-neutral-400 hover:bg-[#2c2c2c]'}`}
+            >
+              LaTeX Template
+            </button>
+          </div>
+
           {cvType === 'html' ? (
             <textarea
-              className="w-full h-[600px] p-4 rounded-xl bg-neutral-950 border border-neutral-800 text-neutral-300 focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-xs font-medium leading-relaxed resize-y"
+              className="w-full h-80 p-4 rounded bg-[#191919] border border-[#2f2f2f] text-neutral-300 focus:outline-none focus:ring-1 focus:ring-blue-500 font-mono text-[11px] leading-relaxed resize-y"
               value={masterHtml}
               onChange={(e) => setMasterHtml(e.target.value)}
               spellCheck="false"
-              placeholder="Paste your HTML here..."
+              placeholder="Paste master HTML template code..."
             />
           ) : (
             <textarea
-              className="w-full h-[600px] p-4 rounded-xl bg-neutral-950 border border-neutral-800 text-neutral-300 focus:outline-none focus:ring-2 focus:ring-pink-500 font-mono text-xs font-medium leading-relaxed resize-y"
+              className="w-full h-80 p-4 rounded bg-[#191919] border border-[#2f2f2f] text-neutral-300 focus:outline-none focus:ring-1 focus:ring-blue-500 font-mono text-[11px] leading-relaxed resize-y"
               value={masterLatex}
               onChange={(e) => setMasterLatex(e.target.value)}
               spellCheck="false"
-              placeholder="Paste your LaTeX code here..."
+              placeholder="Paste master LaTeX template code..."
             />
           )}
         </CardContent>

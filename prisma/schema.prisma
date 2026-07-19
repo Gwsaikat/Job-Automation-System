@@ -30,11 +30,17 @@ model Job {
   coldMailDraftId    String?  @map("cold_mail_draft_id")
   coldMailSent       Int?     @default(0) @map("cold_mail_sent")
   coldMailSentDate   String?  @map("cold_mail_sent_date")
-  referralDraftId    String?  @map("referral_draft_id")
-  followUpDraftId    String?  @map("follow_up_draft_id")
-  applicationStatus  String   @default("Pending") @map("application_status")
-  notes              String?
-  createdAt          String   @default("") @map("created_at")
+  referralDraftId       String?  @map("referral_draft_id")
+  followUpDraftId       String?  @map("follow_up_draft_id")
+  applicationStatus     String   @default("Pending") @map("application_status")
+  processingError       String?  @map("processing_error")
+  processedAt           String?  @map("processed_at")
+  linkedinPeopleSearch  String?  @map("linkedin_people_search")
+  linkedinCompanyPage   String?  @map("linkedin_company_page")
+  googleLinkedinSearch  String?  @map("google_linkedin_search")
+  linkedinContactUrl    String?  @map("linkedin_contact_url")
+  notes                 String?
+  createdAt             String   @default("") @map("created_at")
 
   @@map("jobs")
 }

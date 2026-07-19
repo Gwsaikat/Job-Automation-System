@@ -1,6 +1,7 @@
 // ============================================
 // Adzuna Scraper — Section 4.1
-// Fetches from India and Remote/UK endpoints
+// Fetches from India, UK, US, Canada, Australia endpoints
+// Multiple queries per region for maximum coverage
 // ============================================
 
 import { getConfig } from '../config';
@@ -36,42 +37,111 @@ async function fetchAdzuna(region: string, query: string, sourceName: string): P
   url.searchParams.set('what', query);
   url.searchParams.set('results_per_page', '50');
   url.searchParams.set('sort_by', 'date');
-  url.searchParams.set('max_days_old', '2');
+  url.searchParams.set('max_days_old', '7');  // 7 days instead of 2 for better coverage
 
-  const response = await fetch(url.toString());
+  try {
+    const response = await fetch(url.toString());
 
-  if (!response.ok) {
-    throw new Error(`Adzuna ${sourceName} returned ${response.status}: ${await response.text()}`);
+    if (!response.ok) {
+      console.warn(`[Adzuna] ${sourceName} returned ${response.status}, skipping`);
+      return [];
+    }
+
+    const data: AdzunaResponse = await response.json();
+
+    return (data.results || []).map((item): RawJob => ({
+      sourceId: `adzuna_${item.id}`,
+      title: item.title || '',
+      company: item.company?.display_name || 'Unknown',
+      location: item.location?.display_name || '',
+      description: item.description || '',
+      salaryMin: item.salary_min || 0,
+      salaryMax: item.salary_max || 0,
+      url: item.redirect_url || '',
+      datePosted: item.created || new Date().toISOString(),
+      source: sourceName,
+    }));
+  } catch (error) {
+    console.warn(`[Adzuna] ${sourceName} network error, skipping:`, error);
+    return [];
   }
-
-  const data: AdzunaResponse = await response.json();
-
-  return (data.results || []).map((item): RawJob => ({
-    sourceId: `adzuna_${item.id}`,
-    title: item.title || '',
-    company: item.company?.display_name || 'Unknown',
-    location: item.location?.display_name || '',
-    description: item.description || '',
-    salaryMin: item.salary_min || 0,
-    salaryMax: item.salary_max || 0,
-    url: item.redirect_url || '',
-    datePosted: item.created || new Date().toISOString(),
-    source: sourceName,
-  }));
 }
 
+// India queries — broad coverage from FAANG to startups
+const INDIA_QUERIES = [
+  'software developer',
+  'software engineer',
+  'full stack developer',
+  'react developer',
+  'frontend developer',
+  'backend developer',
+  'nodejs developer',
+  'javascript developer',
+  'web developer',
+  'junior software engineer',
+];
+
+// Remote/International queries
+const REMOTE_QUERIES = [
+  'remote software developer',
+  'remote full stack developer',
+  'remote react developer',
+  'remote javascript developer',
+  'remote web developer entry level',
+];
+
 export async function scrapeAdzunaIndia(): Promise<RawJob[]> {
-  return fetchAdzuna(
-    'in',
-    'full stack developer react nodejs javascript',
-    'Adzuna India'
+  const results = await Promise.allSettled(
+    INDIA_QUERIES.map((query) => fetchAdzuna('in', query, `Adzuna India`))
   );
+
+  const allJobs: RawJob[] = [];
+  const seenIds = new Set<string>();
+
+  for (const result of results) {
+    if (result.status === 'fulfilled') {
+      for (const job of result.value) {
+        if (!seenIds.has(job.sourceId)) {
+          seenIds.add(job.sourceId);
+          allJobs.push(job);
+        }
+      }
+    }
+  }
+
+  console.log(`[Adzuna] India: ${allJobs.length} unique jobs from ${INDIA_QUERIES.length} queries`);
+  return allJobs;
 }
 
 export async function scrapeAdzunaRemoteUK(): Promise<RawJob[]> {
-  return fetchAdzuna(
-    'gb',
-    'react nextjs nodejs remote fresher entry level junior',
-    'Adzuna Remote/UK'
+  // Search multiple regions: UK, US, Canada, Australia
+  const regions = [
+    { code: 'gb', name: 'UK' },
+    { code: 'us', name: 'US' },
+    { code: 'ca', name: 'Canada' },
+    { code: 'au', name: 'Australia' },
+  ];
+
+  const results = await Promise.allSettled(
+    regions.flatMap(({ code, name }) =>
+      REMOTE_QUERIES.map((query) => fetchAdzuna(code, query, `Adzuna ${name}`))
+    )
   );
+
+  const allJobs: RawJob[] = [];
+  const seenIds = new Set<string>();
+
+  for (const result of results) {
+    if (result.status === 'fulfilled') {
+      for (const job of result.value) {
+        if (!seenIds.has(job.sourceId)) {
+          seenIds.add(job.sourceId);
+          allJobs.push(job);
+        }
+      }
+    }
+  }
+
+  console.log(`[Adzuna] Remote/International: ${allJobs.length} unique jobs from ${regions.length} regions`);
+  return allJobs;
 }

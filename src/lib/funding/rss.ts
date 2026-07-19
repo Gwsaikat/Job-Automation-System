@@ -122,7 +122,7 @@ Return JSON:
   "stage": "Seed/Series A/Series B/etc"
 }`;
 
-      const response = await callAIStandard(prompt, { maxTokens: 300, temperature: 0.1 });
+      const response = await callAIStandard(prompt, { maxTokens: 800, temperature: 0.1 });
       const info = parseAIJson<FundingInfo>(response);
 
       // Build data for insert

@@ -232,30 +232,22 @@ export async function callAI(
   if (taskType === 'heavy') {
     chain = [
         { provider: 'groq', model: 'llama-3.3-70b-versatile' },
-        { provider: 'openrouter', model: 'openai/gpt-oss-120b:free' },
-        { provider: 'openrouter', model: 'meta-llama/llama-3.3-70b-instruct:free' },
         { provider: 'groq', model: 'llama-3.1-8b-instant' },
     ];
   } else if (taskType === 'psychological') {
     chain = [
         { provider: 'groq', model: 'llama-3.3-70b-versatile' },
-        { provider: 'openrouter', model: 'meta-llama/llama-3.3-70b-instruct:free' },
         { provider: 'groq', model: 'llama-3.1-8b-instant' },
-        { provider: 'openrouter', model: 'google/gemma-2-9b-it:free' },
     ];
   } else if (taskType === 'email') {
     chain = [
         { provider: 'groq', model: 'llama-3.1-8b-instant' },
-        { provider: 'openrouter', model: 'meta-llama/llama-3.3-70b-instruct:free' },
-        { provider: 'openrouter', model: 'google/gemma-2-9b-it:free' },
         { provider: 'groq', model: 'llama-3.3-70b-versatile' },
     ];
   } else {
     // Default / Scraping / Filtering tasks
     chain = [
         { provider: 'groq', model: 'llama-3.1-8b-instant' },
-        { provider: 'openrouter', model: 'meta-llama/llama-3.3-70b-instruct:free' },
-        { provider: 'openrouter', model: 'google/gemma-2-9b-it:free' },
         { provider: 'groq', model: 'llama-3.3-70b-versatile' },
     ];
   }
@@ -328,12 +320,63 @@ export async function callAIPsychological(
   return callAI(prompt, { ...opts, taskType: 'psychological' });
 }
 
-/** Parse JSON from AI response, stripping markdown code fences if present */
+/** 
+ * Parse JSON from AI response — robust extraction that handles:
+ * - Markdown code fences (```json ... ```)
+ * - Leading/trailing prose ("Here's the JSON:", etc.)
+ * - Trailing commas
+ * - Control characters in strings
+ */
 export function parseAIJson<T>(response: string): T {
-  // Strip markdown code fences (```json ... ```)
   let cleaned = response.trim();
+
+  // Strip markdown code fences (```json ... ```)
   if (cleaned.startsWith('```')) {
-    cleaned = cleaned.replace(/^```(?:json)?\s*\n?/, '').replace(/\n?```\s*$/, '');
+    cleaned = cleaned.replace(/^```(?:json)?[\s\n]*/, '').replace(/[\n\s]*```\s*$/, '');
   }
-  return JSON.parse(cleaned);
+
+  // Try direct parse first
+  try {
+    return JSON.parse(cleaned);
+  } catch {
+    // Continue to more aggressive extraction
+  }
+
+  // Extract JSON object from response text
+  // Find the first { and last matching }
+  const firstBrace = cleaned.indexOf('{');
+  const lastBrace = cleaned.lastIndexOf('}');
+  if (firstBrace !== -1 && lastBrace > firstBrace) {
+    let jsonCandidate = cleaned.substring(firstBrace, lastBrace + 1);
+    
+    // Remove control characters that break JSON (except normal whitespace)
+    jsonCandidate = jsonCandidate.replace(/[\x00-\x08\x0b\x0c\x0e-\x1f]/g, ' ');
+    
+    // Fix trailing commas before } or ]
+    jsonCandidate = jsonCandidate.replace(/,\s*([}\]])/g, '$1');
+    
+    try {
+      return JSON.parse(jsonCandidate);
+    } catch {
+      // Continue to array extraction
+    }
+  }
+
+  // Try extracting JSON array
+  const firstBracket = cleaned.indexOf('[');
+  const lastBracket = cleaned.lastIndexOf(']');
+  if (firstBracket !== -1 && lastBracket > firstBracket) {
+    let jsonCandidate = cleaned.substring(firstBracket, lastBracket + 1);
+    jsonCandidate = jsonCandidate.replace(/[\x00-\x08\x0b\x0c\x0e-\x1f]/g, ' ');
+    jsonCandidate = jsonCandidate.replace(/,\s*([}\]])/g, '$1');
+    
+    try {
+      return JSON.parse(jsonCandidate);
+    } catch {
+      // Fall through
+    }
+  }
+
+  // Last resort: try the original cleaned string
+  throw new Error(`Could not extract valid JSON from AI response: ${cleaned.substring(0, 200)}...`);
 }
