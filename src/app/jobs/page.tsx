@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ExternalLink, RefreshCw, Trash2, AlertCircle, Search, Mail, Linkedin, Globe } from 'lucide-react';
+import { ExternalLink, RefreshCw, Trash2, AlertCircle, Search, Mail, Linkedin, Globe, FileText } from 'lucide-react';
 
 export default function JobsPage() {
   const [jobs, setJobs] = useState<any[]>([]);
@@ -31,9 +31,8 @@ export default function JobsPage() {
 
   useEffect(() => {
     fetchJobs();
-  }, [status]); // refetch when status dropdown changes
+  }, [status]);
 
-  // Trigger search on enter or button click
   const handleSearchKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
       fetchJobs();
@@ -56,8 +55,7 @@ export default function JobsPage() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ pipeline: 'job', jobId: id })
     });
-    // Give a short delay and fetch status to show in-progress updates
-    setTimeout(fetchJobs, 2000);
+    setTimeout(fetchJobs, 2500);
   };
 
   const clearDatabase = async () => {
@@ -87,169 +85,172 @@ export default function JobsPage() {
   };
 
   return (
-    <div className="p-12 max-w-5xl mx-auto space-y-6 select-none animate-in fade-in duration-300">
+    <div className="p-12 max-w-6xl mx-auto space-y-8 select-none relative animate-in fade-in duration-500">
       
+      {/* Background Aura Glows */}
+      <div className="absolute top-0 right-1/3 w-80 h-80 bg-indigo-600/5 rounded-full blur-[100px] pointer-events-none"></div>
+
       {/* Notion Breadcrumbs */}
-      <div className="text-xs text-neutral-500 flex items-center gap-1.5 font-normal">
-        <span>Saikat's Workspace</span>
+      <div className="text-[11px] text-neutral-500 flex items-center gap-1.5 font-mono uppercase tracking-wider relative z-10">
+        <span>Cosmic Hub</span>
         <span>/</span>
-        <span className="text-neutral-400 font-medium">💼 Jobs</span>
+        <span className="text-indigo-400 font-medium">💼 Job Pipeline</span>
       </div>
 
-      {/* Page Title */}
-      <div className="flex justify-between items-start flex-wrap gap-3">
+      {/* Page Header */}
+      <div className="flex justify-between items-start flex-wrap gap-4 relative z-10">
         <div className="space-y-1">
-          <h1 className="text-3xl font-bold tracking-tight text-neutral-100 flex items-center gap-3">
-            <span>💼</span> Jobs Database
+          <h1 className="text-4xl font-extrabold tracking-tight text-neutral-100 flex items-center gap-3">
+            <span>💼</span> <span className="gradient-text-cosmic">Job Database</span>
           </h1>
-          <p className="text-neutral-400 text-sm">
-            Manage your scraped job opportunities, ATS matching, and outreach status.
+          <p className="text-neutral-400 text-[14.5px] font-light leading-relaxed max-w-xl">
+            Sleek database console to view, filter, tailor, and dispatch applications.
           </p>
         </div>
         
         <div className="flex gap-2 items-center">
-          <Button onClick={fetchJobs} variant="outline" className="h-8 text-xs bg-[#202020] border-[#2f2f2f] hover:bg-[#2a2a2a] text-neutral-300 font-normal rounded gap-1.5 shadow-none">
+          <Button onClick={fetchJobs} variant="outline" className="h-9 px-4 text-xs bg-[#0d0d12]/60 border-white/5 hover:border-indigo-500/25 hover:bg-[#20202d]/20 text-neutral-300 font-medium rounded-xl gap-2 shadow-none transition-all duration-300">
             <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
-            Refresh
+            Sync Database
           </Button>
           <Button
             onClick={clearDatabase}
             variant="outline"
-            className="h-8 text-xs bg-[#202020] border-red-900/30 text-red-400 hover:bg-red-950/20 hover:text-red-300 font-normal rounded gap-1.5 shadow-none"
+            className="h-9 px-4 text-xs bg-red-950/5 border border-red-900/20 text-red-400 hover:bg-red-950/20 hover:text-red-300 font-medium rounded-xl gap-2 shadow-none transition-all duration-300"
             disabled={clearing}
           >
             <Trash2 className="w-3.5 h-3.5" />
-            {clearing ? 'Clearing...' : 'Clear DB'}
+            {clearing ? 'Clearing...' : 'Wipe Database'}
           </Button>
         </div>
       </div>
 
-      {/* Clear result notification */}
+      {/* Notifications */}
       {clearResult && (
-        <div className="notion-callout border-green-800 bg-green-950/15 text-green-400 text-xs py-2.5 flex justify-between items-center">
+        <div className="glass-panel p-4 rounded-xl border-green-800 bg-green-950/10 text-green-400 text-xs flex justify-between items-center relative z-10">
           <span>{clearResult}</span>
           <button className="opacity-60 hover:opacity-100 font-bold" onClick={() => setClearResult(null)}>✕</button>
         </div>
       )}
 
-      {/* Database Toolbar Filter */}
-      <div className="flex flex-wrap items-center gap-2 pb-2 border-b border-[#2f2f2f]/60 text-xs">
-        {/* Text Search */}
-        <div className="flex items-center bg-[#202020] border border-[#2f2f2f] rounded px-2.5 py-1 w-64">
-          <span className="text-neutral-500 mr-2 text-xs">🔍</span>
-          <input
-            type="text"
-            placeholder="Search by title, company, location..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            onKeyDown={handleSearchKeyPress}
-            className="bg-transparent border-none text-neutral-200 outline-none w-full text-xs"
-          />
+      {/* Premium Database Toolbar Filter */}
+      <div className="flex flex-wrap items-center justify-between gap-3 p-4 bg-[#0d0d12]/50 backdrop-blur-md rounded-2xl border border-white/5 text-xs relative z-10">
+        <div className="flex flex-wrap items-center gap-3">
+          {/* Text Search */}
+          <div className="flex items-center bg-[#050508]/85 border border-white/5 focus-within:border-indigo-500/50 rounded-xl px-3 py-2 w-72 transition-all">
+            <Search className="w-3.5 h-3.5 text-neutral-500 mr-2" />
+            <input
+              type="text"
+              placeholder="Search roles, companies, keywords..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              onKeyDown={handleSearchKeyPress}
+              className="bg-transparent border-none text-neutral-200 outline-none w-full text-xs font-light"
+            />
+          </div>
+          <Button onClick={fetchJobs} className="h-8 px-4 text-xs bg-indigo-650 hover:bg-indigo-700 text-white font-medium rounded-xl shadow-none">
+            Query
+          </Button>
         </div>
-        <Button onClick={fetchJobs} variant="outline" className="h-7 text-xs bg-[#2a2a2a] border-[#2f2f2f] text-neutral-300 font-normal hover:bg-[#333] shadow-none">
-          Search
-        </Button>
-
-        {/* Separator */}
-        <div className="h-4 w-[1px] bg-[#2f2f2f] mx-2"></div>
 
         {/* Status Select */}
-        <div className="flex items-center gap-1.5 text-neutral-400">
-          <span>Status:</span>
+        <div className="flex items-center gap-2 text-neutral-400">
+          <span className="font-mono uppercase text-[10px] tracking-wider text-neutral-500">Filter status:</span>
           <select
-            className="bg-[#202020] border border-[#2f2f2f] text-neutral-200 text-xs rounded px-2 py-0.5 outline-none cursor-pointer"
+            className="bg-[#050508]/80 border border-white/5 text-neutral-200 text-xs rounded-xl px-3 py-1.5 outline-none cursor-pointer hover:border-white/10 transition-colors"
             value={status}
             onChange={(e) => setStatus(e.target.value)}
           >
-            <option value="all">All statuses</option>
-            <option value="Pending">Pending</option>
-            <option value="Applied">Applied</option>
-            <option value="Interview">Interview</option>
-            <option value="Rejected">Rejected</option>
-            <option value="Offer">Offer</option>
+            <option value="all">All listings</option>
+            <option value="Pending">⏳ Pending Sync</option>
+            <option value="Applied">✅ Applied</option>
+            <option value="Interview">📞 Interviewing</option>
+            <option value="Rejected">❌ Rejected</option>
+            <option value="Offer">🎉 Offered</option>
           </select>
         </div>
       </div>
 
-      {/* Database Table view */}
-      <Card className="border-[#2f2f2f] bg-[#191919] overflow-hidden rounded shadow-none">
+      {/* Database Table layout */}
+      <Card className="glass-panel bg-[#0d0d12]/55 border-white/5 overflow-hidden rounded-2xl shadow-xl relative z-10">
         <div className="overflow-x-auto">
           <table className="w-full text-xs text-left text-neutral-300">
-            <thead className="text-[11px] text-neutral-500 uppercase bg-[#202020]/60 border-b border-[#2f2f2f]">
+            <thead className="text-[11px] text-neutral-500 uppercase tracking-widest bg-[#0a0a0f]/80 border-b border-white/5">
               <tr>
-                <th className="px-5 py-3 font-semibold tracking-wider">Job Role &amp; Company</th>
-                <th className="px-5 py-3 font-semibold tracking-wider">Location / Salary</th>
-                <th className="px-5 py-3 font-semibold tracking-wider">Hiring Contacts</th>
-                <th className="px-5 py-3 font-semibold tracking-wider">Score</th>
-                <th className="px-5 py-3 font-semibold tracking-wider">Status</th>
-                <th className="px-5 py-3 font-semibold tracking-wider text-right">Actions</th>
+                <th className="px-6 py-4 font-semibold">Job Information</th>
+                <th className="px-6 py-4 font-semibold">Location / Compensation</th>
+                <th className="px-6 py-4 font-semibold">Hiring Details</th>
+                <th className="px-6 py-4 font-semibold">ATS Score</th>
+                <th className="px-6 py-4 font-semibold">Pipeline State</th>
+                <th className="px-6 py-4 font-semibold text-right">Console Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-[#2f2f2f]/60">
+            <tbody className="divide-y divide-white/5">
               {jobs.length === 0 && !loading && (
                 <tr>
-                  <td colSpan={6} className="px-5 py-12 text-center text-neutral-500 italic">
-                    No matching jobs found in workspace database.
+                  <td colSpan={6} className="px-6 py-12 text-center text-neutral-500 italic font-light">
+                    No active job listings query matches in cosmic registry.
                   </td>
                 </tr>
               )}
               {jobs.map(job => (
-                <tr key={job.id} className="hover:bg-[#202020]/30 transition-colors">
-                  {/* Title & Company */}
-                  <td className="px-5 py-4.5 align-top">
-                    <div className="font-semibold text-neutral-100 hover:underline cursor-pointer max-w-sm truncate text-[13px]">{job.jobTitle || 'Unknown Role'}</div>
-                    <div className="text-neutral-400 mt-1 flex items-center gap-1.5 flex-wrap">
-                      <span>{job.company || 'Unknown Company'}</span>
-                      <span className="text-[10px] bg-[#202020] text-neutral-400 border border-[#2f2f2f] px-1.5 py-0.2 rounded font-mono">
+                <tr key={job.id} className="hover:bg-[#12121b]/30 transition-all duration-300">
+                  {/* Job Details */}
+                  <td className="px-6 py-5 align-top">
+                    <div className="font-bold text-[13.5px] text-neutral-100 leading-snug hover:text-indigo-300 cursor-pointer transition-colors max-w-sm truncate">{job.jobTitle || 'Unknown Role'}</div>
+                    <div className="text-neutral-400 mt-1 flex items-center gap-2 flex-wrap text-[11px] font-light">
+                      <span className="font-medium text-neutral-300">{job.company || 'Unknown Company'}</span>
+                      <span className="text-[9px] bg-indigo-500/5 text-indigo-400 border border-indigo-500/10 px-1.5 py-0.2 rounded font-mono uppercase">
                         {job.source}
                       </span>
                     </div>
-                    {/* Error Badge */}
+                    {/* Error Box */}
                     {job.processingError && (
                       <div
-                        className="mt-2 flex items-start gap-1.5 bg-red-950/20 border border-red-900/30 rounded px-2.5 py-1 text-red-400 text-[10px] max-w-xs"
+                        className="mt-2.5 flex items-start gap-1.5 bg-red-950/20 border border-red-900/30 rounded-lg px-2.5 py-1.5 text-red-400 text-[10px] max-w-xs"
                         title={job.processingError}
                       >
-                        <AlertCircle className="w-3.5 h-3.5 shrink-0 text-red-400" />
+                        <AlertCircle className="w-3.5 h-3.5 shrink-0 text-red-400 mt-0.5" />
                         <span className="line-clamp-2 leading-tight">{job.processingError}</span>
                       </div>
                     )}
                   </td>
 
                   {/* Location & Salary */}
-                  <td className="px-5 py-4.5 align-top text-neutral-400">
-                    <div className="text-neutral-300 font-medium">{job.locationType || 'Remote'}</div>
-                    <div className="text-neutral-500 mt-0.5">{job.salaryDisplay || 'Not specified'}</div>
+                  <td className="px-6 py-5 align-top text-neutral-400">
+                    <div className="text-neutral-200 font-semibold">{job.locationType || 'Remote'}</div>
+                    <div className="text-neutral-500 text-[11px] mt-0.5 font-light">{job.salaryDisplay || 'Not specified'}</div>
                   </td>
 
-                  {/* Recruiter Details / Fallbacks */}
-                  <td className="px-5 py-4.5 align-top">
+                  {/* Hiring Contact / Searches */}
+                  <td className="px-6 py-5 align-top">
                     {job.hrName || job.hrEmail ? (
-                      <div className="space-y-1">
+                      <div className="space-y-1.5">
                         {job.hrName && (
-                          <div className="text-neutral-300 font-medium flex items-center gap-1">
-                            👤 {job.hrName}
+                          <div className="text-neutral-200 font-semibold flex items-center gap-1.5">
+                            <span className="text-[11px]">👤</span> {job.hrName}
                           </div>
                         )}
-                        {job.hrEmail && <div className="text-neutral-400 font-mono text-[11px] select-all">{job.hrEmail}</div>}
+                        {job.hrEmail && <div className="text-neutral-400 font-mono text-[10.5px] select-all bg-[#050508]/65 px-2 py-0.5 border border-white/5 rounded inline-block">{job.hrEmail}</div>}
                         {job.linkedinContactUrl && (
-                          <a href={job.linkedinContactUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-[10px] text-blue-400 hover:underline">
-                            <Linkedin className="w-3 h-3" /> Profile
-                          </a>
+                          <div className="mt-1">
+                            <a href={job.linkedinContactUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-[10px] text-blue-400 hover:text-blue-300 hover:underline">
+                              <Linkedin className="w-3 h-3" /> Recruiter LinkedIn
+                            </a>
+                          </div>
                         )}
                       </div>
                     ) : (
-                      <div className="flex flex-col gap-1">
-                        <span className="text-neutral-600 block mb-0.5">None found</span>
-                        {/* Fallback search options */}
+                      <div className="flex flex-col gap-1.5">
+                        <span className="text-neutral-600 block text-[10px] italic">No direct profile</span>
                         <div className="flex items-center gap-1 flex-wrap">
                           <a href={job.linkedinPeopleSearch || `https://www.linkedin.com/search/results/people/?keywords=${encodeURIComponent((job.company || '') + ' recruiter India')}`} target="_blank" rel="noreferrer">
-                            <button className="h-5 px-1.5 bg-[#202020] hover:bg-[#2c2c2c] border border-[#2f2f2f] text-[10px] text-neutral-400 rounded flex items-center gap-1 cursor-pointer">
-                              <Linkedin className="w-2.5 h-2.5 text-blue-400" /> Find HR
+                            <button className="h-5.5 px-2 bg-[#050508] hover:bg-neutral-900 border border-white/5 text-[9.5px] text-neutral-400 rounded-lg flex items-center gap-1.5 cursor-pointer transition-colors">
+                              <Linkedin className="w-2.5 h-2.5 text-blue-400" /> Search HR
                             </button>
                           </a>
                           <a href={job.googleLinkedinSearch || `https://www.google.com/search?q=site:linkedin.com+"${encodeURIComponent(job.company || '')}"+recruiter`} target="_blank" rel="noreferrer">
-                            <button className="h-5 px-1.5 bg-[#202020] hover:bg-[#2c2c2c] border border-[#2f2f2f] text-[10px] text-neutral-400 rounded flex items-center gap-1 cursor-pointer">
+                            <button className="h-5.5 px-2 bg-[#050508] hover:bg-neutral-900 border border-white/5 text-[9.5px] text-neutral-400 rounded-lg flex items-center gap-1.5 cursor-pointer transition-colors">
                               <Globe className="w-2.5 h-2.5 text-neutral-400" /> Google
                             </button>
                           </a>
@@ -258,29 +259,29 @@ export default function JobsPage() {
                     )}
                   </td>
 
-                  {/* ATS Score */}
-                  <td className="px-5 py-4.5 align-top">
+                  {/* Score */}
+                  <td className="px-6 py-5 align-top">
                     {job.atsScore ? (
-                      <span className={`text-[10px] px-2 py-0.5 rounded font-semibold border ${
+                      <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold border font-mono ${
                         job.atsScore >= 85 ? 'bg-green-500/10 text-green-400 border-green-500/20' : 
                         job.atsScore >= 65 ? 'bg-orange-500/10 text-orange-400 border-orange-500/20' : 
                         'bg-red-500/10 text-red-400 border-red-500/20'
                       }`}>
-                        {job.atsScore}/100
+                        {job.atsScore}% MATCH
                       </span>
                     ) : (
-                      <span className="text-neutral-600">—</span>
+                      <span className="text-neutral-600 font-mono">—</span>
                     )}
                   </td>
 
-                  {/* Status Dropdown */}
-                  <td className="px-5 py-4.5 align-top">
+                  {/* Status Select */}
+                  <td className="px-6 py-5 align-top">
                     <select
-                      className="bg-[#202020] border border-[#2f2f2f] text-neutral-300 text-xs rounded p-1 outline-none cursor-pointer"
+                      className="bg-[#050508]/85 border border-white/5 hover:border-white/10 text-neutral-300 text-xs rounded-xl p-1.5 outline-none cursor-pointer transition-colors"
                       value={job.applicationStatus}
                       onChange={(e) => updateStatus(job.id, e.target.value)}
                     >
-                      <option value="Pending">Pending</option>
+                      <option value="Pending">Pending Sync</option>
                       <option value="Applied">Applied</option>
                       <option value="Interview">Interview</option>
                       <option value="Rejected">Rejected</option>
@@ -289,10 +290,10 @@ export default function JobsPage() {
                   </td>
 
                   {/* Actions Column */}
-                  <td className="px-5 py-4.5 align-top text-right space-x-1.5 whitespace-nowrap">
-                    {/* View Posting */}
+                  <td className="px-6 py-5 align-top text-right space-x-1.5 whitespace-nowrap">
+                    {/* Link */}
                     <a href={job.jobUrl} target="_blank" rel="noreferrer">
-                      <Button variant="ghost" size="sm" className="h-7 w-7 p-0 bg-[#202020] hover:bg-[#2c2c2c] border border-[#2f2f2f] rounded shadow-none text-neutral-400 hover:text-neutral-200" title="View Original Posting">
+                      <Button variant="ghost" size="sm" className="h-7 w-7 p-0 bg-[#050508]/80 hover:bg-[#12121b] border border-white/5 text-neutral-400 hover:text-neutral-200 transition-colors" title="View Original Posting">
                         <ExternalLink className="w-3.5 h-3.5" />
                       </Button>
                     </a>
@@ -300,12 +301,12 @@ export default function JobsPage() {
                     {/* CV rendering */}
                     {job.cvPdfPath ? (
                       <a href={`/api/jobs/cv?id=${job.id}`} target="_blank" rel="noreferrer">
-                        <Button variant="outline" size="sm" className="h-7 px-2 bg-green-950/20 hover:bg-green-900/30 border border-green-800/40 rounded text-green-400 text-[10px] gap-1 shadow-none" title="Open PDF CV in New Tab">
-                          📄 View CV
+                        <Button variant="outline" size="sm" className="h-7 px-3 bg-green-950/15 hover:bg-green-900/20 border border-green-800/20 rounded-xl text-green-400 text-[10px] gap-1 shadow-none transition-colors" title="Open PDF CV in New Tab">
+                          <FileText className="w-3 h-3" /> View CV
                         </Button>
                       </a>
                     ) : (
-                      <Button variant="ghost" size="sm" className="h-7 px-2 bg-[#202020] hover:bg-[#2c2c2c] border border-[#2f2f2f] rounded text-neutral-400 hover:text-[#2eaadc] text-[10px] shadow-none" title="Process tailored CV and outreach hooks" onClick={() => processJob(job.id)}>
+                      <Button variant="ghost" size="sm" className="h-7 px-3 bg-[#050508]/80 hover:bg-[#12121b] border border-indigo-500/10 rounded-xl text-indigo-400 hover:text-indigo-300 text-[10px] shadow-none transition-colors" title="Process tailored CV and outreach hooks" onClick={() => processJob(job.id)}>
                         ⚙️ Process
                       </Button>
                     )}
@@ -313,8 +314,8 @@ export default function JobsPage() {
                     {/* Gmail Draft */}
                     {job.coldMailDraftId ? (
                       <a href={`https://mail.google.com/mail/u/0/#drafts/${job.coldMailDraftId}`} target="_blank" rel="noreferrer">
-                        <Button variant="outline" size="sm" className="h-7 px-2 bg-purple-950/20 hover:bg-purple-900/30 border border-purple-800/40 rounded text-purple-400 text-[10px] gap-1 shadow-none" title="Open Gmail Draft">
-                          ✉️ Email
+                        <Button variant="outline" size="sm" className="h-7 px-3 bg-purple-950/15 hover:bg-purple-900/20 border border-purple-800/20 rounded-xl text-purple-400 text-[10px] gap-1 shadow-none transition-colors" title="Open Gmail Draft">
+                          ✉️ Open Draft
                         </Button>
                       </a>
                     ) : null}

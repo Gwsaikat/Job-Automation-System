@@ -1,91 +1,190 @@
 @import "tailwindcss";
 
 @theme {
-  --font-sans: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+  --font-sans: 'Outfit', 'Inter', system-ui, -apple-system, sans-serif;
 }
 
 /* 
-  Notion Dark Theme Palette
+  High-End Cosmic / Obsidian UI Design System
 */
 @layer base {
   :root {
-    --background: 0 0% 10%;
-    --foreground: 0 0% 90%;
-    --card: 0 0% 13%;
-    --card-foreground: 0 0% 90%;
-    --popover: 0 0% 13%;
-    --popover-foreground: 0 0% 90%;
-    --primary: 201 79% 52%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 0 0% 16%;
-    --secondary-foreground: 0 0% 90%;
-    --muted: 0 0% 16%;
-    --muted-foreground: 0 0% 55%;
-    --accent: 0 0% 18%;
-    --accent-foreground: 0 0% 95%;
-    --destructive: 0 70% 45%;
-    --destructive-foreground: 0 0% 95%;
-    --border: 0 0% 18%;
-    --input: 0 0% 18%;
-    --ring: 201 79% 52%;
-    --radius: 4px; /* Notion has very small border-radius */
+    --background: 240 10% 3.9%;
+    --foreground: 0 0% 98%;
+    --card: 240 10% 6%;
+    --card-foreground: 0 0% 98%;
+    --popover: 240 10% 6%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 263.4 70% 50.4%;
+    --primary-foreground: 210 20% 98%;
+    --secondary: 240 3.7% 15.9%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 240 3.7% 15.9%;
+    --muted-foreground: 240 5% 64.9%;
+    --accent: 240 3.7% 15.9%;
+    --accent-foreground: 0 0% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 240 3.7% 15.9%;
+    --input: 240 3.7% 15.9%;
+    --ring: 263.4 70% 50.4%;
+    --radius: 12px;
   }
 
   .dark {
-    --background: 0 0% 10%; /* #191919 */
-    --foreground: 0 0% 90%; /* rgba(255,255,255,0.9) */
-    --card: 0 0% 12.5%; /* #202020 */
-    --card-foreground: 0 0% 90%;
-    --popover: 0 0% 12.5%;
-    --popover-foreground: 0 0% 90%;
-    --primary: 201 79% 52%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 0 0% 16%;
-    --secondary-foreground: 0 0% 90%;
-    --muted: 0 0% 16%;
-    --muted-foreground: 0 0% 55%;
-    --accent: 0 0% 18%;
-    --accent-foreground: 0 0% 95%;
-    --destructive: 0 70% 45%;
-    --destructive-foreground: 0 0% 95%;
-    --border: 0 0% 18.5%; /* #2f2f2f */
-    --input: 0 0% 18.5%;
-    --ring: 201 79% 52%;
+    --background: 240 10% 2%; /* Ultra black */
+    --foreground: 0 0% 98%;
+    --card: 240 10% 4.5%; /* Deep dark grey */
+    --card-foreground: 0 0% 98%;
+    --popover: 240 10% 4.5%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 263.4 70% 50.4%; /* Purple accent */
+    --primary-foreground: 210 20% 98%;
+    --secondary: 240 3.7% 12%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 240 3.7% 12%;
+    --muted-foreground: 240 5% 64.9%;
+    --accent: 240 3.7% 12%;
+    --accent-foreground: 0 0% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 240 5% 12%; /* #1e1e24 */
+    --input: 240 5% 12%;
+    --ring: 263.4 70% 50.4%;
   }
 }
 
 @layer base {
   body {
-    background-color: #191919;
-    color: rgba(255, 255, 255, 0.9);
-    font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, "Apple Color Emoji", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol";
-    letter-spacing: -0.01em;
+    background-color: #050508; /* Obsidian deep space black */
+    color: rgba(255, 255, 255, 0.95);
+    font-family: 'Outfit', 'Inter', system-ui, -apple-system, sans-serif;
+    letter-spacing: -0.015em;
+    overflow-x: hidden;
   }
 }
 
-/* Custom Thin Scrollbar */
+/* Premium Animations & Visual Effects */
+
+/* Breathing pulse for statuses */
+@keyframes breathing-pulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.9;
+    box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.4);
+  }
+  50% {
+    transform: scale(1.05);
+    opacity: 1;
+    box-shadow: 0 0 8px 2px rgba(99, 102, 241, 0.6);
+  }
+}
+
+.status-pulse-green {
+  animation: breathing-pulse 2s infinite ease-in-out;
+  background-color: #10b981;
+}
+
+.status-pulse-orange {
+  animation: breathing-pulse 2s infinite ease-in-out;
+  background-color: #f59e0b;
+}
+
+/* Custom modern thin scrollbar */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
 }
 ::-webkit-scrollbar-track {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: #2f2f2f;
-  border-radius: 3px;
+  background: rgba(99, 102, 241, 0.15);
+  border-radius: 99px;
+  transition: all 0.3s ease;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #3f3f3f;
+  background: rgba(99, 102, 241, 0.4);
 }
 
-/* Notion-style Callout Box */
-.notion-callout {
-  display: flex;
-  padding: 12px 16px;
-  border-radius: 4px;
-  background-color: #202020;
-  border: 1px solid #2f2f2f;
-  gap: 12px;
-  font-size: 14px;
+/* Glassmorphism Cards */
+.glass-panel {
+  background: rgba(18, 18, 24, 0.65);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.glass-panel:hover {
+  border-color: rgba(99, 102, 241, 0.25);
+  box-shadow: 0 12px 40px 0 rgba(99, 102, 241, 0.08);
+  transform: translateY(-2px);
+}
+
+/* Linear-gradient animated border highlights */
+.animated-gradient-border {
+  position: relative;
+  background: #0d0d11;
+  border-radius: 12px;
+  z-index: 1;
+}
+.animated-gradient-border::before {
+  content: '';
+  position: absolute;
+  top: -1.5px; left: -1.5px; right: -1.5px; bottom: -1.5px;
+  background: linear-gradient(45deg, #6366f1, #8b5cf6, #d946ef, #14b8a6);
+  background-size: 400% 400%;
+  border-radius: 13px;
+  z-index: -1;
+  opacity: 0.15;
+  transition: opacity 0.3s ease-in-out;
+}
+.animated-gradient-border:hover::before {
+  opacity: 0.55;
+  animation: border-gradient-anim 8s ease infinite;
+}
+
+@keyframes border-gradient-anim {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* Premium Gradient Text */
+.gradient-text-indigo {
+  background: linear-gradient(135deg, #a5b4fc 0%, #6366f1 50%, #4338ca 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.gradient-text-cosmic {
+  background: linear-gradient(135deg, #ffffff 0%, #c084fc 60%, #818cf8 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Micro Interactions */
+.interactive-hover {
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+.interactive-hover:hover {
+  transform: scale(1.015);
+  filter: brightness(1.1);
+}
+
+.button-premium {
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  color: white;
+  border: none;
+  box-shadow: 0 4px 14px rgba(99, 102, 241, 0.3);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  font-weight: 500;
+}
+.button-premium:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(99, 102, 241, 0.45);
+  background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+}
+.button-premium:active {
+  transform: translateY(1px);
 }
