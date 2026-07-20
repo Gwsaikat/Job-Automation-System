@@ -9,6 +9,7 @@ import { generateHook } from './hook';
 import { generateColdEmail, generateReferralMessage } from './emails';
 import { createDraft, isGmailConnected } from './gmail';
 import { callAIStandard } from '../ai';
+import { CANDIDATE } from '../candidate-profile';
 
 export interface OutreachResult {
   hrName: string | null;
@@ -20,6 +21,9 @@ export interface OutreachResult {
   linkedinCompanyPage: string | null;
   googleLinkedinSearch: string | null;
   linkedinContactUrl: string | null;
+  linkedinNote: string | null;
+  founderMessage: string | null;
+  hrMessage: string | null;
 }
 
 export async function runOutreachPipeline(jobId: number): Promise<OutreachResult> {
@@ -42,6 +46,9 @@ export async function runOutreachPipeline(jobId: number): Promise<OutreachResult
     linkedinCompanyPage: null,
     googleLinkedinSearch: null,
     linkedinContactUrl: null,
+    linkedinNote: null,
+    founderMessage: null,
+    hrMessage: null,
   };
 
   // Step 1: Apollo lookup (Section 6.1)
@@ -73,7 +80,12 @@ export async function runOutreachPipeline(jobId: number): Promise<OutreachResult
     company,
     jobTitle
   );
-  console.log(`[Outreach] Hook angle: ${hookResult.angle} — "${hookResult.hook}"`);
+  console.log(`[Outreach] Hook angle: ${hookResult.angle} (${hookResult.influencePrinciple}) — "${hookResult.hook}"`);
+
+  // Store all message types from hook
+  result.linkedinNote = hookResult.linkedinNote || null;
+  result.founderMessage = hookResult.founderMessage || null;
+  result.hrMessage = hookResult.hrMessage || null;
 
   // Step 3: Determine most relevant skill for referral
   let mostRelevantSkill = 'full-stack development with React and Node.js';
@@ -153,6 +165,9 @@ Return ONLY the skill name, nothing else.`;
       linkedinCompanyPage: result.linkedinCompanyPage,
       googleLinkedinSearch: result.googleLinkedinSearch,
       linkedinContactUrl: result.linkedinContactUrl,
+      linkedinNote: result.linkedinNote,
+      founderMessage: result.founderMessage,
+      hrMessage: result.hrMessage,
     },
   });
 

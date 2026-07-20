@@ -1,13 +1,14 @@
 import type { Metadata } from 'next';
-import { Outfit } from 'next/font/google';
+import { Inter } from 'next/font/google';
 import './globals.css';
 import { Sidebar } from '@/components/sidebar';
+import { Topbar } from '@/components/topbar';
 
-const outfit = Outfit({ subsets: ['latin'], weight: ['300', '400', '500', '600', '700', '800'] });
+const inter = Inter({ subsets: ['latin'], weight: ['300', '400', '500', '600', '700'] });
 
 export const metadata: Metadata = {
-  title: 'Job AutoSystem — Cosmic Workspace',
-  description: 'Self-hosted premium web application for automated job hunting',
+  title: 'AntiGravity — Career Operating System',
+  description: 'Autonomous AI Career Operating System for Software Engineers',
 };
 
 export default function RootLayout({
@@ -17,11 +18,14 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="dark">
-      <body className={`${outfit.className} min-h-screen bg-[#050508] text-neutral-50 flex overflow-x-hidden antialiased`}>
+      <body className={`${inter.className} min-h-screen bg-[#09090B] text-[#FAFAFA] flex overflow-x-hidden antialiased`}>
         <Sidebar />
-        <main className="flex-1 overflow-y-auto">
-          {children}
-        </main>
+        <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+          <Topbar />
+          <main className="flex-1 overflow-y-auto page-fade bg-[#09090B]">
+            {children}
+          </main>
+        </div>
       </body>
     </html>
   );

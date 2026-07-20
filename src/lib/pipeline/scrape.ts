@@ -1,7 +1,7 @@
 // ============================================
-// Main Scraping Pipeline Orchestrator — Section 4
-// runDailyScrapePipeline(): fetches from all sources,
-// deduplicates, filters, and inserts into database
+// Career OS — Main Pipeline Orchestrator
+// Quality > Quantity pipeline:
+// Scrape → Multi-gate Filter → Score → Threshold → CV → Outreach
 // ============================================
 
 import prisma from '../db';
@@ -12,11 +12,12 @@ import { scrapeRemotive } from '../scrapers/remotive';
 import { scrapeRemoteOK } from '../scrapers/remoteok';
 import { scrapeUnstop } from '../scrapers/unstop';
 import { scrapeSerper } from '../scrapers/serper';
-import { filterJobByLocation, filterJobByTechFit } from './filter';
+import { runAllFilterGates, filterJobByLocation } from './filter';
+import { computeMatchScores, classifyTier, QUALIFIED_THRESHOLD } from './match-engine';
 import { runCVPipeline } from '../cv/pipeline';
 import { runOutreachPipeline } from '../outreach/pipeline';
 
-// ---- BUG #5 FIX: Semaphore to limit concurrent CV+Outreach processing ----
+// ---- Semaphore to limit concurrent CV+Outreach processing ----
 export class Semaphore {
   private running = 0;
   private queue: (() => void)[] = [];
@@ -35,7 +36,7 @@ export class Semaphore {
 }
 export const jobProcessingSemaphore = new Semaphore(2);
 
-// ---- Deduplication (Section 4.5) ----
+// ---- Deduplication ----
 
 async function getExistingSourceIds(): Promise<Set<string>> {
   const jobIds = await prisma.job.findMany({ select: { sourceId: true } });
@@ -49,7 +50,7 @@ async function getExistingSourceIds(): Promise<Set<string>> {
   return set;
 }
 
-// ---- Hiring Challenge Detection (Section 4.4) ----
+// ---- Hiring Challenge Detection ----
 
 function isHiringChallenge(job: RawJob): boolean {
   const text = `${job.title} ${job.description}`.toLowerCase();
@@ -69,7 +70,10 @@ export interface PipelineStats {
   challengesInserted: number;
   jobsPassed: number;
   jobsRejected: number;
+  jobsBelowThreshold: number;
+  jobsQualified: number;
   errors: string[];
+  filterBreakdown: Record<string, number>;
 }
 
 // ---- Main Pipeline ----
@@ -81,14 +85,17 @@ export async function runDailyScrapePipeline(): Promise<PipelineStats> {
     challengesInserted: 0,
     jobsPassed: 0,
     jobsRejected: 0,
+    jobsBelowThreshold: 0,
+    jobsQualified: 0,
     errors: [],
+    filterBreakdown: { visa: 0, role: 0, experience: 0, location: 0, techFit: 0 },
   };
 
   const today = new Date().toISOString().split('T')[0];
 
-  console.log('[Pipeline] Starting daily scrape pipeline...');
+  console.log('[Pipeline] Starting Career OS daily pipeline...');
 
-  // Step 1: Fetch from ALL sources in parallel (Promise.allSettled — Section 4.1)
+  // Step 1: Fetch from ALL sources in parallel (Promise.allSettled)
   const [
     adzunaIndiaResult,
     adzunaUKResult,
@@ -133,20 +140,20 @@ export async function runDailyScrapePipeline(): Promise<PipelineStats> {
 
   // Unstop goes directly to challenges
   if (unstopResult.status === 'fulfilled') {
-    console.log(`[Pipeline] Unstop: ${unstopResult.value.length} challenges fetched`);
+    console.log(`[Pipeline] Challenges: ${unstopResult.value.length} challenges fetched`);
     allChallenges.push(...unstopResult.value);
   } else {
-    const errMsg = `Unstop failed: ${unstopResult.reason}`;
+    const errMsg = `Challenges failed: ${unstopResult.reason}`;
     console.error(`[Pipeline] ${errMsg}`);
     stats.errors.push(errMsg);
   }
 
   stats.totalFetched = allRawJobs.length + allChallenges.length;
 
-  // Step 2: Get existing source IDs for dedup (Section 4.5)
+  // Step 2: Get existing source IDs for dedup
   const existingIds = await getExistingSourceIds();
 
-  // Step 3: Insert challenges (zero AI cost — Section 4.4)
+  // Step 3: Insert challenges (zero AI cost)
   for (const challenge of allChallenges) {
     if (existingIds.has(challenge.sourceId)) {
       stats.duplicatesSkipped++;
@@ -163,12 +170,13 @@ export async function runDailyScrapePipeline(): Promise<PipelineStats> {
           source: challenge.source,
           applyLink: challenge.applyLink,
           deadline: challenge.deadline,
+          platform: challenge.platform || challenge.source,
+          challengeType: challenge.challengeType || 'competition',
         },
       });
       stats.challengesInserted++;
       existingIds.add(challenge.sourceId);
     } catch (err) {
-      // Unique constraint violation = already exists
       if (String(err).includes('Unique constraint')) {
         stats.duplicatesSkipped++;
       } else {
@@ -177,7 +185,7 @@ export async function runDailyScrapePipeline(): Promise<PipelineStats> {
     }
   }
 
-  // Step 4: Process jobs — split hiring challenges, dedup, filter
+  // Step 4: Process jobs — multi-gate filter → score → threshold
   for (const rawJob of allRawJobs) {
     // Check for hiring challenge pattern
     if (isHiringChallenge(rawJob)) {
@@ -196,6 +204,8 @@ export async function runDailyScrapePipeline(): Promise<PipelineStats> {
             source: rawJob.source,
             applyLink: rawJob.url,
             deadline: '',
+            platform: rawJob.source,
+            challengeType: 'hiring',
           },
         });
         stats.challengesInserted++;
@@ -216,7 +226,8 @@ export async function runDailyScrapePipeline(): Promise<PipelineStats> {
     await processAndInsertJob(rawJob, stats);
   }
 
-  console.log(`[Pipeline] Complete! Fetched: ${stats.totalFetched}, Passed: ${stats.jobsPassed}, Rejected: ${stats.jobsRejected}, Challenges: ${stats.challengesInserted}, Dupes: ${stats.duplicatesSkipped}`);
+  console.log(`[Pipeline] Complete! Fetched: ${stats.totalFetched}, Qualified: ${stats.jobsQualified}, Below Threshold: ${stats.jobsBelowThreshold}, Rejected: ${stats.jobsRejected}, Challenges: ${stats.challengesInserted}`);
+  console.log(`[Pipeline] Filter breakdown:`, JSON.stringify(stats.filterBreakdown));
 
   // Update last scrape run timestamp
   await prisma.appState.upsert({
@@ -231,11 +242,11 @@ export async function runDailyScrapePipeline(): Promise<PipelineStats> {
 export async function processAndInsertJob(rawJob: RawJob, stats?: PipelineStats): Promise<void> {
   const today = new Date().toISOString().split('T')[0];
 
-  // Location + salary filter (Section 4.6)
-  const filterResult = filterJobByLocation(rawJob);
+  // ---- Multi-gate filter pipeline ----
+  const filterResult = await runAllFilterGates(rawJob);
 
   if (!filterResult.passed) {
-    // Log rejection for skills gap analysis (Section 7.3)
+    // Log rejection with gate info
     try {
       await prisma.rejectedJob.create({
         data: {
@@ -246,7 +257,7 @@ export async function processAndInsertJob(rawJob: RawJob, stats?: PipelineStats)
           location: rawJob.location,
           source: rawJob.source,
           jobUrl: rawJob.url,
-          rejectReason: filterResult.rejectReason || 'Failed location/salary filter',
+          rejectReason: `[${filterResult.rejectGate}] ${filterResult.rejectReason || 'Failed filter'}`,
           createdAt: new Date().toISOString(),
         },
       });
@@ -255,35 +266,19 @@ export async function processAndInsertJob(rawJob: RawJob, stats?: PipelineStats)
     }
     if (stats) {
       stats.jobsRejected++;
+      if (filterResult.rejectGate) {
+        stats.filterBreakdown[filterResult.rejectGate] = (stats.filterBreakdown[filterResult.rejectGate] || 0) + 1;
+      }
     }
     return;
   }
 
-  // AI Tech Fit Filter
-  const techFitResult = await filterJobByTechFit(rawJob);
-  if (!techFitResult.passed) {
-    try {
-      await prisma.rejectedJob.create({
-        data: {
-          sourceId: rawJob.sourceId,
-          dateFound: today,
-          jobTitle: rawJob.title,
-          company: rawJob.company,
-          location: rawJob.location,
-          source: rawJob.source,
-          jobUrl: rawJob.url,
-          rejectReason: techFitResult.rejectReason || 'Failed AI tech fit filter',
-          createdAt: new Date().toISOString(),
-        },
-      });
-    } catch {}
-    if (stats) {
-      stats.jobsRejected++;
-    }
-    return;
-  }
+  // ---- Match Scoring Engine ----
+  const locFilter = filterResult.filterResult!;
+  const matchScores = await computeMatchScores(rawJob, locFilter, false);
+  const matchTier = classifyTier(matchScores.overallScore);
 
-  // Insert the job into the database
+  // Insert the job into the database (ALL tiers get stored, tier determines further processing)
   let insertedJobId: number | null = null;
   try {
     const inserted = await prisma.job.create({
@@ -293,11 +288,15 @@ export async function processAndInsertJob(rawJob: RawJob, stats?: PipelineStats)
         jobTitle: rawJob.title,
         company: rawJob.company,
         location: rawJob.location,
-        locationType: filterResult.category,
-        salaryDisplay: filterResult.salaryDisplay,
+        locationType: locFilter.category,
+        salaryDisplay: locFilter.salaryDisplay,
         source: rawJob.source,
         jobUrl: rawJob.url,
         jobDescription: rawJob.description,
+        locationPriority: locFilter.locationPriority,
+        overallScore: matchScores.overallScore,
+        matchScores: JSON.stringify(matchScores),
+        matchTier,
         createdAt: new Date().toISOString(),
       },
     });
@@ -305,29 +304,27 @@ export async function processAndInsertJob(rawJob: RawJob, stats?: PipelineStats)
     insertedJobId = inserted.id;
     if (stats) {
       stats.jobsPassed++;
+      if (matchTier === 'qualified') stats.jobsQualified++;
+      else if (matchTier === 'below_threshold') stats.jobsBelowThreshold++;
     }
-    console.log(`[Pipeline] Job INSERTED: ${rawJob.title} at ${rawJob.company} (id=${insertedJobId})`);
+    console.log(`[Pipeline] Job INSERTED: ${rawJob.title} at ${rawJob.company} (id=${insertedJobId}, score=${matchScores.overallScore}, tier=${matchTier})`);
   } catch (err) {
     if (String(err).includes('Unique constraint')) {
-      if (stats) {
-        stats.duplicatesSkipped++;
-      }
+      if (stats) stats.duplicatesSkipped++;
     } else {
       console.error('[Pipeline] Job insert error:', err);
-      if (stats) {
-        stats.errors.push(`Job insert error: ${rawJob.title} - ${err}`);
-      }
+      if (stats) stats.errors.push(`Job insert error: ${rawJob.title} - ${err}`);
     }
     return;
   }
 
-  // Trigger CV+Outreach with semaphore cap and error recording
-  if (insertedJobId) {
+  // ---- Only trigger CV+Outreach for QUALIFIED jobs (≥85%) ----
+  if (insertedJobId && matchTier === 'qualified') {
     const jobId = insertedJobId;
     setTimeout(async () => {
       await jobProcessingSemaphore.acquire();
       try {
-        console.log(`[Pipeline] Auto-triggering CV and Outreach for Job ${jobId}`);
+        console.log(`[Pipeline] Auto-triggering CV and Outreach for Job ${jobId} (score: ${matchScores.overallScore})`);
         await runCVPipeline(jobId);
         await runOutreachPipeline(jobId);
         await prisma.job.update({
@@ -352,6 +349,7 @@ export async function processAndInsertJob(rawJob: RawJob, stats?: PipelineStats)
         jobProcessingSemaphore.release();
       }
     }, 0);
+  } else if (insertedJobId && matchTier === 'below_threshold') {
+    console.log(`[Pipeline] Job ${insertedJobId} scored ${matchScores.overallScore} — below threshold, stored for manual review`);
   }
 }
-

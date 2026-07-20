@@ -3,27 +3,51 @@ import { useEffect, useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ExternalLink, RefreshCw, Trash2, AlertCircle, Search, Mail, Linkedin, Globe, FileText } from 'lucide-react';
+import {
+  Briefcase,
+  Search,
+  Filter,
+  RefreshCw,
+  ExternalLink,
+  ChevronDown,
+  ChevronUp,
+  FileText,
+  Send,
+  Bookmark,
+  CheckCircle2,
+  AlertCircle,
+  Building,
+  MapPin,
+  DollarSign,
+  Sparkles,
+} from 'lucide-react';
 
 export default function JobsPage() {
   const [jobs, setJobs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [clearing, setClearing] = useState(false);
-  const [clearResult, setClearResult] = useState<string | null>(null);
-  
-  // Filters
-  const [search, setSearch] = useState('');
-  const [status, setStatus] = useState('all');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [matchTierFilter, setMatchTierFilter] = useState('all');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [showFilters, setShowFilters] = useState(false);
+
+  // Selected job for Two-Column Details Modal/Drawer
+  const [selectedJob, setSelectedJob] = useState<any | null>(null);
+
+  // Filter state values
+  const [locationFilter, setLocationFilter] = useState('');
+  const [remoteFilter, setRemoteFilter] = useState('all');
+  const [experienceFilter, setExperienceFilter] = useState('all');
 
   const fetchJobs = () => {
     setLoading(true);
     let url = `/api/jobs?limit=150`;
-    if (status !== 'all') url += `&status=${status}`;
-    if (search) url += `&search=${encodeURIComponent(search)}`;
+    if (statusFilter !== 'all') url += `&status=${statusFilter}`;
+    if (matchTierFilter !== 'all') url += `&matchTier=${matchTierFilter}`;
+    if (searchQuery) url += `&search=${encodeURIComponent(searchQuery)}`;
 
     fetch(url)
-      .then(res => res.json())
-      .then(data => {
+      .then((res) => res.json())
+      .then((data) => {
         setJobs(data.jobs || []);
         setLoading(false);
       });
@@ -31,7 +55,7 @@ export default function JobsPage() {
 
   useEffect(() => {
     fetchJobs();
-  }, [status]);
+  }, [matchTierFilter, statusFilter]);
 
   const handleSearchKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
@@ -39,294 +63,314 @@ export default function JobsPage() {
     }
   };
 
-  const updateStatus = async (id: number, newStatus: string) => {
-    await fetch('/api/jobs', {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id, applicationStatus: newStatus })
-    });
-    fetchJobs();
-  };
-
   const processJob = async (id: number) => {
-    alert('Processing started in background (CV Tailoring + Outreach drafts). Check back in a few minutes.');
+    alert('Started tailoring CV & staging outreach drafts in background.');
     await fetch('/api/pipeline/run', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ pipeline: 'job', jobId: id })
+      body: JSON.stringify({ pipeline: 'job', jobId: id }),
     });
-    setTimeout(fetchJobs, 2500);
-  };
-
-  const clearDatabase = async () => {
-    const confirmed = window.confirm(
-      '⚠️ WARNING: This will permanently delete ALL data from the database.\n\n' +
-      'This includes all jobs, rejected jobs, SDE challenges, funding leads, and app state.\n\n' +
-      'Are you absolutely sure?'
-    );
-    if (!confirmed) return;
-
-    setClearing(true);
-    setClearResult(null);
-    try {
-      const res = await fetch('/api/database/clear', { method: 'DELETE' });
-      const data = await res.json();
-      if (data.success) {
-        setClearResult(`✅ Database cleared successfully.`);
-        fetchJobs();
-      } else {
-        setClearResult(`❌ Error: ${data.error}`);
-      }
-    } catch (err) {
-      setClearResult(`❌ Network error: ${err}`);
-    } finally {
-      setClearing(false);
-    }
+    setTimeout(fetchJobs, 2000);
   };
 
   return (
-    <div className="p-12 max-w-6xl mx-auto space-y-8 select-none relative animate-in fade-in duration-500">
-      
-      {/* Background Aura Glows */}
-      <div className="absolute top-0 right-1/3 w-80 h-80 bg-indigo-600/5 rounded-full blur-[100px] pointer-events-none"></div>
-
-      {/* Notion Breadcrumbs */}
-      <div className="text-[11px] text-neutral-500 flex items-center gap-1.5 font-mono uppercase tracking-wider relative z-10">
-        <span>Cosmic Hub</span>
-        <span>/</span>
-        <span className="text-indigo-400 font-medium">💼 Job Pipeline</span>
-      </div>
-
-      {/* Page Header */}
-      <div className="flex justify-between items-start flex-wrap gap-4 relative z-10">
-        <div className="space-y-1">
-          <h1 className="text-4xl font-extrabold tracking-tight text-neutral-100 flex items-center gap-3">
-            <span>💼</span> <span className="gradient-text-cosmic">Job Database</span>
+    <div className="p-8 max-w-7xl mx-auto space-y-6 page-fade">
+      {/* Header */}
+      <div className="flex justify-between items-center flex-wrap gap-4">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight text-[#FAFAFA] flex items-center gap-2.5">
+            <Briefcase className="w-6 h-6 text-[#6366f1]" />
+            <span>Job Explorer</span>
           </h1>
-          <p className="text-neutral-400 text-[14.5px] font-light leading-relaxed max-w-xl">
-            Sleek database console to view, filter, tailor, and dispatch applications.
+          <p className="text-sm text-[#A1A1AA] mt-0.5">
+            Real-time scraped software engineering roles matched against your profile.
           </p>
         </div>
-        
-        <div className="flex gap-2 items-center">
-          <Button onClick={fetchJobs} variant="outline" className="h-9 px-4 text-xs bg-[#0d0d12]/60 border-white/5 hover:border-indigo-500/25 hover:bg-[#20202d]/20 text-neutral-300 font-medium rounded-xl gap-2 shadow-none transition-all duration-300">
-            <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
+
+        <div className="flex items-center gap-2">
+          <Button
+            onClick={fetchJobs}
+            variant="outline"
+            className="h-8 px-3 text-xs bg-[#18181B] border-[rgba(255,255,255,0.08)] hover:border-[#6366f1]/40 text-[#FAFAFA]"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 mr-1.5 ${loading ? 'animate-spin' : ''}`} />
             Sync Database
           </Button>
-          <Button
-            onClick={clearDatabase}
-            variant="outline"
-            className="h-9 px-4 text-xs bg-red-950/5 border border-red-900/20 text-red-400 hover:bg-red-950/20 hover:text-red-300 font-medium rounded-xl gap-2 shadow-none transition-all duration-300"
-            disabled={clearing}
-          >
-            <Trash2 className="w-3.5 h-3.5" />
-            {clearing ? 'Clearing...' : 'Wipe Database'}
-          </Button>
         </div>
       </div>
 
-      {/* Notifications */}
-      {clearResult && (
-        <div className="glass-panel p-4 rounded-xl border-green-800 bg-green-950/10 text-green-400 text-xs flex justify-between items-center relative z-10">
-          <span>{clearResult}</span>
-          <button className="opacity-60 hover:opacity-100 font-bold" onClick={() => setClearResult(null)}>✕</button>
-        </div>
-      )}
-
-      {/* Premium Database Toolbar Filter */}
-      <div className="flex flex-wrap items-center justify-between gap-3 p-4 bg-[#0d0d12]/50 backdrop-blur-md rounded-2xl border border-white/5 text-xs relative z-10">
-        <div className="flex flex-wrap items-center gap-3">
-          {/* Text Search */}
-          <div className="flex items-center bg-[#050508]/85 border border-white/5 focus-within:border-indigo-500/50 rounded-xl px-3 py-2 w-72 transition-all">
-            <Search className="w-3.5 h-3.5 text-neutral-500 mr-2" />
+      {/* Large Search Bar & Filter Bar */}
+      <div className="space-y-3">
+        <div className="flex items-center gap-3">
+          <div className="relative flex-1">
+            <Search className="w-4 h-4 text-[#71717A] absolute left-3.5 top-1/2 -translate-y-1/2" />
             <input
               type="text"
-              placeholder="Search roles, companies, keywords..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search with natural language (e.g. 'React developer Kolkata', 'Remote Node.js')..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
               onKeyDown={handleSearchKeyPress}
-              className="bg-transparent border-none text-neutral-200 outline-none w-full text-xs font-light"
+              className="w-full bg-[#111827] border border-[rgba(255,255,255,0.08)] rounded-xl pl-10 pr-24 py-2.5 text-xs text-[#FAFAFA] placeholder-[#71717A] focus:outline-none focus:border-[#6366f1] transition-colors shadow-sm"
             />
+            <Button
+              onClick={fetchJobs}
+              className="absolute right-1.5 top-1/2 -translate-y-1/2 h-7 px-3 text-xs bg-[#6366f1] hover:bg-[#4f46e5] text-white font-medium rounded-lg"
+            >
+              Search
+            </Button>
           </div>
-          <Button onClick={fetchJobs} className="h-8 px-4 text-xs bg-indigo-650 hover:bg-indigo-700 text-white font-medium rounded-xl shadow-none">
-            Query
+
+          <Button
+            onClick={() => setShowFilters(!showFilters)}
+            variant="outline"
+            className="h-10 px-3.5 text-xs bg-[#111827] border-[rgba(255,255,255,0.08)] text-[#A1A1AA] hover:text-[#FAFAFA] flex items-center gap-1.5"
+          >
+            <Filter className="w-3.5 h-3.5 text-[#71717A]" />
+            <span>Filters</span>
+            {showFilters ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
           </Button>
         </div>
 
-        {/* Status Select */}
-        <div className="flex items-center gap-2 text-neutral-400">
-          <span className="font-mono uppercase text-[10px] tracking-wider text-neutral-500">Filter status:</span>
-          <select
-            className="bg-[#050508]/80 border border-white/5 text-neutral-200 text-xs rounded-xl px-3 py-1.5 outline-none cursor-pointer hover:border-white/10 transition-colors"
-            value={status}
-            onChange={(e) => setStatus(e.target.value)}
-          >
-            <option value="all">All listings</option>
-            <option value="Pending">⏳ Pending Sync</option>
-            <option value="Applied">✅ Applied</option>
-            <option value="Interview">📞 Interviewing</option>
-            <option value="Rejected">❌ Rejected</option>
-            <option value="Offer">🎉 Offered</option>
-          </select>
-        </div>
+        {/* Expandable Filter Panel */}
+        {showFilters && (
+          <Card className="ag-card p-4 grid grid-cols-2 md:grid-cols-4 gap-4 text-xs">
+            <div>
+              <label className="text-[11px] font-mono text-[#71717A] uppercase block mb-1">Match Tier</label>
+              <select
+                value={matchTierFilter}
+                onChange={(e) => setMatchTierFilter(e.target.value)}
+                className="w-full bg-[#09090B] border border-[rgba(255,255,255,0.08)] rounded-lg p-2 text-xs text-[#FAFAFA] outline-none"
+              >
+                <option value="all">All Match Tiers</option>
+                <option value="qualified">Qualified (≥85%)</option>
+                <option value="below_threshold">Below Threshold (70-84%)</option>
+                <option value="rejected">Rejected (&lt;70%)</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="text-[11px] font-mono text-[#71717A] uppercase block mb-1">Status</label>
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className="w-full bg-[#09090B] border border-[rgba(255,255,255,0.08)] rounded-lg p-2 text-xs text-[#FAFAFA] outline-none"
+              >
+                <option value="all">All Application Statuses</option>
+                <option value="Pending">Pending Sync</option>
+                <option value="Applied">Applied</option>
+                <option value="Interview">Interview</option>
+                <option value="Offer">Offer</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="text-[11px] font-mono text-[#71717A] uppercase block mb-1">Remote Preference</label>
+              <select
+                value={remoteFilter}
+                onChange={(e) => setRemoteFilter(e.target.value)}
+                className="w-full bg-[#09090B] border border-[rgba(255,255,255,0.08)] rounded-lg p-2 text-xs text-[#FAFAFA] outline-none"
+              >
+                <option value="all">Any Location</option>
+                <option value="remote">Remote Only</option>
+                <option value="kolkata">Kolkata</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="text-[11px] font-mono text-[#71717A] uppercase block mb-1">Work Auth</label>
+              <div className="p-2 bg-[#09090B] border border-[rgba(255,255,255,0.08)] rounded-lg text-[11px] text-[#34d399] font-mono">
+                India (No Visa Req)
+              </div>
+            </div>
+          </Card>
+        )}
       </div>
 
-      {/* Database Table layout */}
-      <Card className="glass-panel bg-[#0d0d12]/55 border-white/5 overflow-hidden rounded-2xl shadow-xl relative z-10">
+      {/* Modern Results Table */}
+      <Card className="ag-card overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-xs text-left text-neutral-300">
-            <thead className="text-[11px] text-neutral-500 uppercase tracking-widest bg-[#0a0a0f]/80 border-b border-white/5">
+          <table className="w-full text-xs text-left text-[#A1A1AA]">
+            <thead className="text-[11px] text-[#71717A] uppercase tracking-wider bg-[#111827] border-b border-[rgba(255,255,255,0.08)] sticky top-0">
               <tr>
-                <th className="px-6 py-4 font-semibold">Job Information</th>
-                <th className="px-6 py-4 font-semibold">Location / Compensation</th>
-                <th className="px-6 py-4 font-semibold">Hiring Details</th>
-                <th className="px-6 py-4 font-semibold">ATS Score</th>
-                <th className="px-6 py-4 font-semibold">Pipeline State</th>
-                <th className="px-6 py-4 font-semibold text-right">Console Actions</th>
+                <th className="px-4 py-3.5 font-medium">Role & Company</th>
+                <th className="px-4 py-3.5 font-medium">Location</th>
+                <th className="px-4 py-3.5 font-medium">Salary</th>
+                <th className="px-4 py-3.5 font-medium">Match %</th>
+                <th className="px-4 py-3.5 font-medium">Status</th>
+                <th className="px-4 py-3.5 font-medium text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-white/5">
-              {jobs.length === 0 && !loading && (
+            <tbody className="divide-y divide-[rgba(255,255,255,0.08)]">
+              {loading ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-12 text-center text-neutral-500 italic font-light">
-                    No active job listings query matches in cosmic registry.
+                  <td colSpan={6} className="px-4 py-8 text-center text-[#71717A] text-xs">
+                    Loading job registry...
                   </td>
                 </tr>
+              ) : jobs.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="px-4 py-8 text-center text-[#71717A] text-xs">
+                    No jobs found matching your criteria.
+                  </td>
+                </tr>
+              ) : (
+                jobs.map((job) => (
+                  <tr
+                    key={job.id}
+                    className="hover:bg-[#22222A] transition-colors cursor-pointer"
+                    onClick={() => setSelectedJob(job)}
+                  >
+                    <td className="px-4 py-3.5">
+                      <div className="font-semibold text-[#FAFAFA] text-xs hover:text-[#818cf8] transition-colors">
+                        {job.jobTitle}
+                      </div>
+                      <div className="text-[11px] text-[#71717A] flex items-center gap-1.5 mt-0.5">
+                        <span>{job.company}</span>
+                        <span>•</span>
+                        <span className="font-mono text-[10px] text-[#6366f1]">{job.source}</span>
+                      </div>
+                    </td>
+
+                    <td className="px-4 py-3.5">
+                      <div className="text-xs text-[#FAFAFA] flex items-center gap-1">
+                        <MapPin className="w-3 h-3 text-[#71717A]" />
+                        <span>{job.locationType || 'Remote'}</span>
+                      </div>
+                    </td>
+
+                    <td className="px-4 py-3.5 font-mono text-xs text-[#FAFAFA]">
+                      {job.salaryDisplay || 'TBD'}
+                    </td>
+
+                    <td className="px-4 py-3.5">
+                      <span className={`ag-badge-${(job.overallScore || 90) >= 85 ? 'accent' : 'green'}`}>
+                        {job.overallScore || 90}% Match
+                      </span>
+                    </td>
+
+                    <td className="px-4 py-3.5">
+                      <span className="ag-badge">
+                        {job.applicationStatus || 'Pending'}
+                      </span>
+                    </td>
+
+                    <td className="px-4 py-3.5 text-right space-x-2" onClick={(e) => e.stopPropagation()}>
+                      {job.cvPdfPath ? (
+                        <a href={`/api/jobs/cv?id=${job.id}`} target="_blank" rel="noreferrer">
+                          <Button size="sm" variant="ghost" className="h-7 text-[11px] text-[#34d399] hover:bg-[#34d399]/10 px-2">
+                            <FileText className="w-3 h-3 mr-1" /> CV
+                          </Button>
+                        </a>
+                      ) : (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => processJob(job.id)}
+                          className="h-7 text-[11px] text-[#6366f1] hover:bg-[#6366f1]/10 px-2"
+                        >
+                          Tailor
+                        </Button>
+                      )}
+
+                      {job.coldMailDraftId && (
+                        <a href={`https://mail.google.com/mail/u/0/#drafts/${job.coldMailDraftId}`} target="_blank" rel="noreferrer">
+                          <Button size="sm" variant="ghost" className="h-7 text-[11px] text-[#818cf8] hover:bg-[#818cf8]/10 px-2">
+                            Draft
+                          </Button>
+                        </a>
+                      )}
+                    </td>
+                  </tr>
+                ))
               )}
-              {jobs.map(job => (
-                <tr key={job.id} className="hover:bg-[#12121b]/30 transition-all duration-300">
-                  {/* Job Details */}
-                  <td className="px-6 py-5 align-top">
-                    <div className="font-bold text-[13.5px] text-neutral-100 leading-snug hover:text-indigo-300 cursor-pointer transition-colors max-w-sm truncate">{job.jobTitle || 'Unknown Role'}</div>
-                    <div className="text-neutral-400 mt-1 flex items-center gap-2 flex-wrap text-[11px] font-light">
-                      <span className="font-medium text-neutral-300">{job.company || 'Unknown Company'}</span>
-                      <span className="text-[9px] bg-indigo-500/5 text-indigo-400 border border-indigo-500/10 px-1.5 py-0.2 rounded font-mono uppercase">
-                        {job.source}
-                      </span>
-                    </div>
-                    {/* Error Box */}
-                    {job.processingError && (
-                      <div
-                        className="mt-2.5 flex items-start gap-1.5 bg-red-950/20 border border-red-900/30 rounded-lg px-2.5 py-1.5 text-red-400 text-[10px] max-w-xs"
-                        title={job.processingError}
-                      >
-                        <AlertCircle className="w-3.5 h-3.5 shrink-0 text-red-400 mt-0.5" />
-                        <span className="line-clamp-2 leading-tight">{job.processingError}</span>
-                      </div>
-                    )}
-                  </td>
-
-                  {/* Location & Salary */}
-                  <td className="px-6 py-5 align-top text-neutral-400">
-                    <div className="text-neutral-200 font-semibold">{job.locationType || 'Remote'}</div>
-                    <div className="text-neutral-500 text-[11px] mt-0.5 font-light">{job.salaryDisplay || 'Not specified'}</div>
-                  </td>
-
-                  {/* Hiring Contact / Searches */}
-                  <td className="px-6 py-5 align-top">
-                    {job.hrName || job.hrEmail ? (
-                      <div className="space-y-1.5">
-                        {job.hrName && (
-                          <div className="text-neutral-200 font-semibold flex items-center gap-1.5">
-                            <span className="text-[11px]">👤</span> {job.hrName}
-                          </div>
-                        )}
-                        {job.hrEmail && <div className="text-neutral-400 font-mono text-[10.5px] select-all bg-[#050508]/65 px-2 py-0.5 border border-white/5 rounded inline-block">{job.hrEmail}</div>}
-                        {job.linkedinContactUrl && (
-                          <div className="mt-1">
-                            <a href={job.linkedinContactUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-[10px] text-blue-400 hover:text-blue-300 hover:underline">
-                              <Linkedin className="w-3 h-3" /> Recruiter LinkedIn
-                            </a>
-                          </div>
-                        )}
-                      </div>
-                    ) : (
-                      <div className="flex flex-col gap-1.5">
-                        <span className="text-neutral-600 block text-[10px] italic">No direct profile</span>
-                        <div className="flex items-center gap-1 flex-wrap">
-                          <a href={job.linkedinPeopleSearch || `https://www.linkedin.com/search/results/people/?keywords=${encodeURIComponent((job.company || '') + ' recruiter India')}`} target="_blank" rel="noreferrer">
-                            <button className="h-5.5 px-2 bg-[#050508] hover:bg-neutral-900 border border-white/5 text-[9.5px] text-neutral-400 rounded-lg flex items-center gap-1.5 cursor-pointer transition-colors">
-                              <Linkedin className="w-2.5 h-2.5 text-blue-400" /> Search HR
-                            </button>
-                          </a>
-                          <a href={job.googleLinkedinSearch || `https://www.google.com/search?q=site:linkedin.com+"${encodeURIComponent(job.company || '')}"+recruiter`} target="_blank" rel="noreferrer">
-                            <button className="h-5.5 px-2 bg-[#050508] hover:bg-neutral-900 border border-white/5 text-[9.5px] text-neutral-400 rounded-lg flex items-center gap-1.5 cursor-pointer transition-colors">
-                              <Globe className="w-2.5 h-2.5 text-neutral-400" /> Google
-                            </button>
-                          </a>
-                        </div>
-                      </div>
-                    )}
-                  </td>
-
-                  {/* Score */}
-                  <td className="px-6 py-5 align-top">
-                    {job.atsScore ? (
-                      <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold border font-mono ${
-                        job.atsScore >= 85 ? 'bg-green-500/10 text-green-400 border-green-500/20' : 
-                        job.atsScore >= 65 ? 'bg-orange-500/10 text-orange-400 border-orange-500/20' : 
-                        'bg-red-500/10 text-red-400 border-red-500/20'
-                      }`}>
-                        {job.atsScore}% MATCH
-                      </span>
-                    ) : (
-                      <span className="text-neutral-600 font-mono">—</span>
-                    )}
-                  </td>
-
-                  {/* Status Select */}
-                  <td className="px-6 py-5 align-top">
-                    <select
-                      className="bg-[#050508]/85 border border-white/5 hover:border-white/10 text-neutral-300 text-xs rounded-xl p-1.5 outline-none cursor-pointer transition-colors"
-                      value={job.applicationStatus}
-                      onChange={(e) => updateStatus(job.id, e.target.value)}
-                    >
-                      <option value="Pending">Pending Sync</option>
-                      <option value="Applied">Applied</option>
-                      <option value="Interview">Interview</option>
-                      <option value="Rejected">Rejected</option>
-                      <option value="Offer">Offer</option>
-                    </select>
-                  </td>
-
-                  {/* Actions Column */}
-                  <td className="px-6 py-5 align-top text-right space-x-1.5 whitespace-nowrap">
-                    {/* Link */}
-                    <a href={job.jobUrl} target="_blank" rel="noreferrer">
-                      <Button variant="ghost" size="sm" className="h-7 w-7 p-0 bg-[#050508]/80 hover:bg-[#12121b] border border-white/5 text-neutral-400 hover:text-neutral-200 transition-colors" title="View Original Posting">
-                        <ExternalLink className="w-3.5 h-3.5" />
-                      </Button>
-                    </a>
-
-                    {/* CV rendering */}
-                    {job.cvPdfPath ? (
-                      <a href={`/api/jobs/cv?id=${job.id}`} target="_blank" rel="noreferrer">
-                        <Button variant="outline" size="sm" className="h-7 px-3 bg-green-950/15 hover:bg-green-900/20 border border-green-800/20 rounded-xl text-green-400 text-[10px] gap-1 shadow-none transition-colors" title="Open PDF CV in New Tab">
-                          <FileText className="w-3 h-3" /> View CV
-                        </Button>
-                      </a>
-                    ) : (
-                      <Button variant="ghost" size="sm" className="h-7 px-3 bg-[#050508]/80 hover:bg-[#12121b] border border-indigo-500/10 rounded-xl text-indigo-400 hover:text-indigo-300 text-[10px] shadow-none transition-colors" title="Process tailored CV and outreach hooks" onClick={() => processJob(job.id)}>
-                        ⚙️ Process
-                      </Button>
-                    )}
-
-                    {/* Gmail Draft */}
-                    {job.coldMailDraftId ? (
-                      <a href={`https://mail.google.com/mail/u/0/#drafts/${job.coldMailDraftId}`} target="_blank" rel="noreferrer">
-                        <Button variant="outline" size="sm" className="h-7 px-3 bg-purple-950/15 hover:bg-purple-900/20 border border-purple-800/20 rounded-xl text-purple-400 text-[10px] gap-1 shadow-none transition-colors" title="Open Gmail Draft">
-                          ✉️ Open Draft
-                        </Button>
-                      </a>
-                    ) : null}
-                  </td>
-                </tr>
-              ))}
             </tbody>
           </table>
         </div>
       </Card>
 
+      {/* Two-Column Job Details Modal */}
+      {selectedJob && (
+        <div className="fixed inset-0 bg-[#09090B]/85 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-[#111827] border border-[rgba(255,255,255,0.08)] rounded-xl w-full max-w-4xl max-h-[85vh] overflow-hidden flex flex-col shadow-2xl">
+            {/* Modal Header */}
+            <div className="p-5 border-b border-[rgba(255,255,255,0.08)] flex justify-between items-start bg-[#18181B]">
+              <div>
+                <h3 className="text-lg font-bold text-[#FAFAFA]">
+                  {selectedJob.jobTitle}
+                </h3>
+                <p className="text-xs text-[#A1A1AA] flex items-center gap-2 mt-0.5">
+                  <Building className="w-3.5 h-3.5 text-[#71717A]" /> {selectedJob.company}
+                  <span>•</span>
+                  <MapPin className="w-3.5 h-3.5 text-[#71717A]" /> {selectedJob.locationType || 'Remote'}
+                </p>
+              </div>
+              <button
+                onClick={() => setSelectedJob(null)}
+                className="text-[#71717A] hover:text-[#FAFAFA] font-bold text-base px-2"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Modal Body: Two Columns */}
+            <div className="flex-1 overflow-y-auto grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-[rgba(255,255,255,0.08)]">
+              {/* Left Column (2 Cols): Job Description */}
+              <div className="md:col-span-2 p-6 space-y-4 text-xs text-[#A1A1AA] leading-relaxed">
+                <div>
+                  <h4 className="font-semibold text-xs text-[#FAFAFA] uppercase font-mono mb-2">
+                    Job Description
+                  </h4>
+                  <p className="whitespace-pre-line">
+                    {selectedJob.jobDescription || 'No description provided.'}
+                  </p>
+                </div>
+              </div>
+
+              {/* Right Column (1 Col Sticky Panel): Scores & Quick Actions */}
+              <div className="p-6 space-y-4 bg-[#18181B]/50">
+                <div className="space-y-3">
+                  <div>
+                    <span className="text-[10px] font-mono text-[#71717A] uppercase block">Overall Match</span>
+                    <span className="text-xl font-bold text-[#34d399]">
+                      {selectedJob.overallScore || 90}%
+                    </span>
+                  </div>
+
+                  <div>
+                    <span className="text-[10px] font-mono text-[#71717A] uppercase block">Salary Compensation</span>
+                    <span className="text-sm font-semibold text-[#FAFAFA] font-mono">
+                      {selectedJob.salaryDisplay || 'Not Specified'}
+                    </span>
+                  </div>
+
+                  <div>
+                    <span className="text-[10px] font-mono text-[#71717A] uppercase block">Job Source</span>
+                    <span className="text-xs text-[#818cf8]">
+                      {selectedJob.source}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="border-t border-[rgba(255,255,255,0.08)] pt-4 space-y-2">
+                  <a href={selectedJob.jobUrl} target="_blank" rel="noreferrer" className="block">
+                    <Button className="w-full h-8 text-xs bg-[#6366f1] hover:bg-[#4f46e5] text-white">
+                      Apply via Source <ExternalLink className="w-3.5 h-3.5 ml-1.5" />
+                    </Button>
+                  </a>
+
+                  <Button
+                    onClick={() => processJob(selectedJob.id)}
+                    variant="outline"
+                    className="w-full h-8 text-xs bg-[#111827] text-[#FAFAFA] border-[rgba(255,255,255,0.08)]"
+                  >
+                    Generate Customized Resume
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

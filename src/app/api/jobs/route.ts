@@ -13,10 +13,14 @@ export async function GET(request: NextRequest) {
     const status = searchParams.get('status');
     const source = searchParams.get('source');
     const search = searchParams.get('search');
-    const sortBy = searchParams.get('sortBy') || 'id';
+    const matchTier = searchParams.get('matchTier');
+    const sortBy = searchParams.get('sortBy') || 'overallScore';
     const sortOrder = (searchParams.get('sortOrder') || 'desc') as 'asc' | 'desc';
 
     const where: any = {};
+    if (matchTier && matchTier !== 'all') {
+      where.matchTier = matchTier;
+    }
     if (status && status !== 'all') {
       where.applicationStatus = status;
     }

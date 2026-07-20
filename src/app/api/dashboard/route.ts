@@ -35,6 +35,25 @@ export async function GET() {
       },
     });
 
+    // Career OS: tier counts
+    const qualifiedCount = await prisma.job.count({
+      where: { matchTier: 'qualified' },
+    });
+    const belowThresholdCount = await prisma.job.count({
+      where: { matchTier: 'below_threshold' },
+    });
+
+    // Career OS: overall score average
+    const allOverallScores = await prisma.job.findMany({
+      where: { overallScore: { not: null } },
+      select: { overallScore: true },
+    });
+    const avgOverallScore = allOverallScores.length > 0
+      ? Math.round(
+          allOverallScores.reduce((sum, j) => sum + (j.overallScore || 0), 0) / allOverallScores.length
+        )
+      : 0;
+
     // Chart: jobs by source
     const allJobs = await prisma.job.findMany({
       select: { source: true },
@@ -72,6 +91,27 @@ export async function GET() {
       ).length,
     }));
 
+    // Career OS: overall score distribution
+    const overallScoreDistribution = [
+      { name: '<70', count: allOverallScores.filter(j => (j.overallScore || 0) < 70).length },
+      { name: '70-84', count: allOverallScores.filter(j => (j.overallScore || 0) >= 70 && (j.overallScore || 0) < 85).length },
+      { name: '85-94', count: allOverallScores.filter(j => (j.overallScore || 0) >= 85 && (j.overallScore || 0) < 95).length },
+      { name: '95-100', count: allOverallScores.filter(j => (j.overallScore || 0) >= 95).length },
+    ];
+
+    // Career OS: quality pipeline funnel
+    const totalScraped = await prisma.job.count() + await prisma.rejectedJob.count();
+    const passedFilter = await prisma.job.count();
+    const cvGenerated = await prisma.job.count({ where: { cvPdfPath: { not: null } } });
+    const outreachSent = await prisma.job.count({ where: { coldMailDraftId: { not: null } } });
+    const qualityFunnel = [
+      { stage: 'Scraped', count: totalScraped },
+      { stage: 'Passed Filter', count: passedFilter },
+      { stage: 'Scored ≥85%', count: qualifiedCount },
+      { stage: 'CV Generated', count: cvGenerated },
+      { stage: 'Outreach Staged', count: outreachSent },
+    ];
+
     // Recent activity
     const recentJobs = await prisma.job.findMany({
       orderBy: { id: 'desc' },
@@ -83,6 +123,8 @@ export async function GET() {
         source: true,
         locationType: true,
         atsScore: true,
+        overallScore: true,
+        matchTier: true,
         applicationStatus: true,
         dateFound: true,
       },
@@ -112,13 +154,18 @@ export async function GET() {
         jobsToday,
         pendingApplications,
         avgAtsScore,
+        avgOverallScore,
         coldEmailsPending,
         totalJobs: allJobs.length,
+        qualifiedCount,
+        belowThresholdCount,
       },
       charts: {
         jobsBySource,
         statusBreakdown,
         atsDistribution,
+        overallScoreDistribution,
+        qualityFunnel,
       },
       recentJobs,
       lastRuns: lastRunMap,

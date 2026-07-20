@@ -6,6 +6,7 @@
 import prisma from '../db';
 import { callAIStandard, parseAIJson } from '../ai';
 import { lookupHRContacts } from '../outreach/apollo';
+import { CANDIDATE_SKILL_KEYWORDS } from '../candidate-profile';
 import Parser from 'rss-parser';
 
 const RSS_FEEDS = [
@@ -21,6 +22,16 @@ const FUNDING_KEYWORDS = [
   'api', 'developer', 'investment',
 ];
 
+// ---- Hidden Hiring Signal Keywords ----
+
+const HIRING_SIGNAL_KEYWORDS = [
+  'we are growing', 'scaling', 'hiring soon', 'engineering expansion',
+  'building our team', 'expanding the team', 'growing fast',
+  'looking for talent', 'hiring spree', 'rapid growth',
+  'doubling our engineering', 'ramping up', 'aggressive hiring',
+  'looking for engineers', 'engineering-first',
+];
+
 interface FundingInfo {
   company: string;
   amount: string;
@@ -30,6 +41,8 @@ interface FundingInfo {
   domain: string;
   isIndian: boolean;
   stage: string;
+  techStack: string[];
+  hiringSignals: string[];
 }
 
 function matchesFundingKeywords(text: string): boolean {
@@ -119,11 +132,32 @@ Return JSON:
   "needsDevelopers": true/false,
   "domain": "web/mobile/ai/fintech/etc",
   "isIndian": true/false,
-  "stage": "Seed/Series A/Series B/etc"
+  "stage": "Seed/Series A/Series B/etc",
+  "techStack": ["list of technologies mentioned or likely used"],
+  "hiringSignals": ["any phrases indicating imminent hiring"]
 }`;
 
       const response = await callAIStandard(prompt, { maxTokens: 800, temperature: 0.1 });
       const info = parseAIJson<FundingInfo>(response);
+
+      // ---- Hidden Hiring Intelligence ----
+
+      // Detect hiring signals from text
+      const contentLower = item.content.toLowerCase();
+      const detectedSignals: string[] = [
+        ...(info.hiringSignals || []),
+      ];
+      for (const signal of HIRING_SIGNAL_KEYWORDS) {
+        if (contentLower.includes(signal) && !detectedSignals.includes(signal)) {
+          detectedSignals.push(signal);
+        }
+      }
+
+      // Compute tech stack match
+      const techStackMatch = computeTechStackMatch(info.techStack || []);
+
+      // Compute hiring probability
+      const hiringProbability = computeHiringProbability(info, detectedSignals, techStackMatch);
 
       // Build data for insert
       const data: Record<string, unknown> = {
@@ -137,10 +171,13 @@ Return JSON:
         isIndian: info.isIndian ? 1 : 0,
         domain: info.domain,
         newsLink: item.link,
+        hiringProbability,
+        hiringSignals: JSON.stringify(detectedSignals),
+        techStackMatch,
       };
 
-      // Apollo lookup only if needsDevelopers (save API calls)
-      if (info.needsDevelopers) {
+      // Apollo lookup only if needsDevelopers AND high hiring probability
+      if (info.needsDevelopers && hiringProbability >= 50) {
         const apollo = await lookupHRContacts(info.company);
         if (apollo.contacts.length > 0) {
           data.emailsFound = JSON.stringify(apollo.contacts.map((c) => c.email));
@@ -169,4 +206,49 @@ Return JSON:
 
   console.log(`[Funding] Done. Inserted ${stats.leadsInserted} leads.`);
   return stats;
+}
+
+// ---- Hidden Hiring Intelligence Helpers ----
+
+function computeTechStackMatch(techStack: string[]): number {
+  if (!techStack || techStack.length === 0) return 30; // unknown
+
+  let matches = 0;
+  for (const tech of techStack) {
+    if (CANDIDATE_SKILL_KEYWORDS.has(tech.toLowerCase())) {
+      matches++;
+    }
+  }
+
+  if (techStack.length === 0) return 30;
+  return Math.min(100, Math.round((matches / techStack.length) * 100));
+}
+
+function computeHiringProbability(
+  info: FundingInfo,
+  signals: string[],
+  techMatch: number
+): number {
+  let score = 20; // baseline
+
+  // Funding stage scoring
+  const stage = (info.stage || '').toLowerCase();
+  if (stage.includes('seed')) score += 15;
+  if (stage.includes('series a')) score += 25;
+  if (stage.includes('series b')) score += 20;
+  if (stage.includes('series c') || stage.includes('series d')) score += 10;
+
+  // Needs developers
+  if (info.needsDevelopers) score += 20;
+
+  // Hiring signals detected
+  score += Math.min(20, signals.length * 5);
+
+  // Indian company bonus (more accessible)
+  if (info.isIndian) score += 5;
+
+  // Tech stack match bonus
+  if (techMatch >= 50) score += 10;
+
+  return Math.min(100, score);
 }

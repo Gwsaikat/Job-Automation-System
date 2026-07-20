@@ -39,6 +39,19 @@ model Job {
   linkedinCompanyPage   String?  @map("linkedin_company_page")
   googleLinkedinSearch  String?  @map("google_linkedin_search")
   linkedinContactUrl    String?  @map("linkedin_contact_url")
+  // ---- Career OS: Scoring & Quality Fields ----
+  overallScore          Int?     @map("overall_score")
+  matchScores           String?  @map("match_scores")
+  matchTier             String   @default("pending") @map("match_tier")
+  experienceRequired    String?  @map("experience_required")
+  roleLevel             String?  @map("role_level")
+  visaRequired          String?  @map("visa_required")
+  salaryEstimated       Int?     @default(0) @map("salary_estimated")
+  locationPriority      Int?     @map("location_priority")
+  // ---- Career OS: Outreach Message Types ----
+  linkedinNote          String?  @map("linkedin_note")
+  founderMessage        String?  @map("founder_message")
+  hrMessage             String?  @map("hr_message")
   notes                 String?
   createdAt             String   @default("") @map("created_at")
 
@@ -55,6 +68,8 @@ model SdeChallenge {
   applyLink     String? @map("apply_link")
   deadline      String?
   status        String  @default("Not Applied")
+  challengeType String? @map("challenge_type")
+  platform      String? @map("platform")
   notes         String?
 
   @@map("sde_challenges")
@@ -76,6 +91,9 @@ model FundingLead {
   linkedinCompanyPage   String? @map("linkedin_company_page")
   googleLinkedinSearch  String? @map("google_linkedin_search")
   newsLink              String? @map("news_link")
+  hiringProbability     Int?    @map("hiring_probability")
+  hiringSignals         String? @map("hiring_signals")
+  techStackMatch        Int?    @map("tech_stack_match")
   status                String  @default("Not Contacted")
   notes                 String?
 

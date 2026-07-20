@@ -2,71 +2,125 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
+import {
+  LayoutDashboard,
+  Briefcase,
+  Kanban,
+  Trophy,
+  TrendingUp,
+  FileText,
+  Send,
+  BarChart3,
+  Settings,
+  ChevronLeft,
+  ChevronRight,
+  ShieldCheck,
+  Zap,
+} from 'lucide-react';
+import { useState } from 'react';
 
 const routes = [
-  { label: 'Dashboard', emoji: '📊', href: '/' },
-  { label: 'Jobs', emoji: '💼', href: '/jobs' },
-  { label: 'Challenges', emoji: '🏆', href: '/challenges' },
-  { label: 'Funding Leads', emoji: '📈', href: '/funding-leads' },
-  { label: 'Manual Paste', emoji: '📝', href: '/paste-job' },
-  { label: 'Settings', emoji: '⚙️', href: '/settings' },
+  { label: 'Mission Control', icon: LayoutDashboard, href: '/' },
+  { label: 'Jobs', icon: Briefcase, href: '/jobs' },
+  { label: 'Applications', icon: Kanban, href: '/applications' },
+  { label: 'Challenges', icon: Trophy, href: '/challenges' },
+  { label: 'Funding', icon: TrendingUp, href: '/funding' },
+  { label: 'Resume Studio', icon: FileText, href: '/resume-studio' },
+  { label: 'Outreach Hub', icon: Send, href: '/outreach' },
+  { label: 'Analytics', icon: BarChart3, href: '/analytics' },
+  { label: 'Settings', icon: Settings, href: '/settings' },
 ];
 
 export function Sidebar() {
   const pathname = usePathname();
+  const [collapsed, setCollapsed] = useState(false);
 
   return (
-    <div className="flex flex-col w-64 bg-[#0d0d12]/90 backdrop-blur-xl text-neutral-300 min-h-screen p-4 select-none border-r border-indigo-950/20 relative">
-      {/* Dynamic Background Aura Glow */}
-      <div className="absolute top-0 left-0 w-24 h-48 bg-indigo-600/10 rounded-full blur-[60px] pointer-events-none"></div>
-
-      {/* Workspace Header */}
-      <div className="flex items-center space-x-3 mb-8 px-3 py-2.5 rounded-xl bg-indigo-950/20 border border-indigo-900/15 relative z-10">
-        <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-indigo-500 via-purple-500 to-pink-500 flex items-center justify-center font-bold text-white shadow-lg shadow-indigo-500/20">
-          S
-        </div>
-        <div className="flex flex-col min-w-0">
-          <div className="font-bold text-[14px] text-neutral-100 leading-none mb-0.5">
-            Saikat's Workspace
+    <aside
+      className={cn(
+        "flex flex-col bg-[#111827] text-[#A1A1AA] min-h-screen border-r border-[rgba(255,255,255,0.08)] select-none transition-all duration-200 z-30 relative shrink-0",
+        collapsed ? "w-16" : "w-60"
+      )}
+    >
+      {/* Brand Header */}
+      <div className="flex items-center justify-between h-16 px-4 border-b border-[rgba(255,255,255,0.08)]">
+        <Link href="/" className="flex items-center gap-2.5 overflow-hidden">
+          <div className="w-8 h-8 rounded-lg bg-[#6366f1] flex items-center justify-center text-[#FAFAFA] font-bold text-sm shrink-0 shadow-sm">
+            <Zap className="w-4 h-4 text-white fill-white" />
           </div>
-          <span className="text-[10px] text-indigo-400/80 font-medium">Cosmic Hub</span>
-        </div>
+          {!collapsed && (
+            <div className="flex flex-col">
+              <span className="font-semibold text-sm text-[#FAFAFA] tracking-tight leading-none">
+                AntiGravity
+              </span>
+              <span className="text-[10px] text-[#71717A] font-mono mt-0.5">
+                Career OS v2.0
+              </span>
+            </div>
+          )}
+        </Link>
+        <button
+          onClick={() => setCollapsed(!collapsed)}
+          className="p-1 rounded-md text-[#71717A] hover:text-[#FAFAFA] hover:bg-[#18181B] transition-colors"
+          title={collapsed ? "Expand Sidebar" : "Collapse Sidebar"}
+        >
+          {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
+        </button>
       </div>
-      
-      {/* Navigation Group */}
-      <div className="space-y-1 flex-1 relative z-10">
-        <div className="text-[10px] font-bold text-neutral-500 px-3.5 mb-3 tracking-widest uppercase">
-          Workspace Navigation
-        </div>
+
+      {/* Navigation Links */}
+      <nav className="flex-1 px-2 py-4 space-y-1 overflow-y-auto">
+        {!collapsed && (
+          <div className="text-[10px] font-semibold text-[#71717A] px-3 mb-2 uppercase tracking-wider font-mono">
+            Navigation
+          </div>
+        )}
         {routes.map((route) => {
-          const isActive = pathname === route.href;
+          const Icon = route.icon;
+          // Alias /funding-leads to /funding for active state
+          const isActive = pathname === route.href || (route.href === '/funding' && pathname === '/funding-leads');
+
           return (
             <Link
               key={route.href}
               href={route.href}
               className={cn(
-                "flex items-center space-x-3.5 px-3.5 py-2.5 rounded-xl text-[14px] font-normal transition-all duration-300 relative group",
+                "flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition-all duration-180 group relative",
                 isActive
-                  ? "bg-indigo-650/15 text-indigo-200 border border-indigo-500/20 shadow-inner"
-                  : "text-neutral-400 hover:bg-neutral-900/60 hover:text-neutral-200 hover:translate-x-1"
+                  ? "bg-[#6366f1] text-[#FAFAFA] shadow-sm font-semibold"
+                  : "text-[#A1A1AA] hover:bg-[#18181B] hover:text-[#FAFAFA]"
               )}
+              title={collapsed ? route.label : undefined}
             >
-              {/* Highlight bar for active tab */}
-              {isActive && (
-                <div className="absolute left-0 w-1 h-5 rounded-r bg-indigo-400"></div>
+              <Icon className={cn("w-4 h-4 shrink-0 transition-transform duration-180 group-hover:scale-110", isActive ? "text-[#FAFAFA]" : "text-[#71717A] group-hover:text-[#A1A1AA]")} />
+              {!collapsed && <span className="truncate">{route.label}</span>}
+              {isActive && !collapsed && (
+                <div className="ml-auto w-1.5 h-1.5 rounded-full bg-[#FAFAFA]" />
               )}
-              <span className="text-lg leading-none transition-transform duration-300 group-hover:scale-110">{route.emoji}</span>
-              <span className="truncate tracking-wide">{route.label}</span>
             </Link>
           );
         })}
-      </div>
+      </nav>
 
-      {/* Footer Info */}
-      <div className="px-3.5 py-3 text-[10px] text-neutral-500 border-t border-neutral-900/70 font-mono relative z-10 flex items-center justify-between">
-        <span>Job AutoSystem</span>
-        <span className="text-indigo-400/70 bg-indigo-500/5 border border-indigo-500/10 px-1.5 py-0.2 rounded font-sans">v0.1.0</span>
+      {/* User Profile & System Status */}
+      <div className="p-3 border-t border-[rgba(255,255,255,0.08)] bg-[#09090B]/40">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-full bg-[#18181B] border border-[rgba(255,255,255,0.1)] flex items-center justify-center font-semibold text-xs text-[#FAFAFA] shrink-0">
+            SM
+          </div>
+          {!collapsed && (
+            <div className="flex flex-col min-w-0 flex-1">
+              <span className="text-xs font-semibold text-[#FAFAFA] truncate">
+                Saikat Maji
+              </span>
+              <div className="flex items-center gap-1.5 text-[10px] text-[#34d399] font-mono mt-0.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#34d399] animate-pulse" />
+                <span>Autopilot Active</span>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
-    </div>
+    </aside>
   );
 }
