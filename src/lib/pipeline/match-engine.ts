@@ -101,26 +101,23 @@ function scoreSkillMatch(job: RawJob): number {
 function scoreExperienceMatch(job: RawJob): number {
   const textLower = `${job.title} ${job.description?.substring(0, 800) || ''}`.toLowerCase();
 
-  // Perfect match indicators
-  const perfectKeywords = ['fresher', 'new grad', 'entry level', 'entry-level', '0-1', '0-2', 'campus', 'graduate', 'junior'];
+  // Perfect 0-1 year match indicators
+  const perfectKeywords = ['fresher', 'freshers', 'new grad', 'entry level', 'entry-level', '0-1', '0-1 year', '0-1 yrs', 'campus', 'graduate trainee', 'trainee', 'apprentice'];
   for (const kw of perfectKeywords) {
     if (textLower.includes(kw)) return 100;
   }
 
-  // Good match
-  const goodKeywords = ['1-2', '1-3', '0-3', 'associate', 'intern', 'trainee'];
+  // Good entry-level match
+  const goodKeywords = ['junior', 'associate', 'intern', '0-2', '1 year', '1 yr'];
   for (const kw of goodKeywords) {
-    if (textLower.includes(kw)) return 85;
+    if (textLower.includes(kw)) return 90;
   }
 
-  // Acceptable (2-4 years mentioned but not strict requirement)
-  if (/\b2[\s-]+(?:to\s+)?4\s*(?:years?|yrs?)\b/i.test(textLower)) return 65;
+  // No experience requirement mentioned — neutral entry-level
+  if (!/\b\d+\s*(?:\+?\s*)?(?:years?|yrs?)\b/i.test(textLower)) return 80;
 
-  // No experience requirement mentioned — neutral
-  if (!/\b\d+\s*(?:\+?\s*)?(?:years?|yrs?)\b/i.test(textLower)) return 75;
-
-  // Has a years requirement we didn't match — lower score
-  return 50;
+  // 2+ years experience mentioned — low score for entry-level candidate
+  return 40;
 }
 
 function scoreLocation(filterResult: FilterResult): number {
@@ -201,12 +198,12 @@ function scoreFounderNetworkValue(job: RawJob): number {
 // AI-Powered Scoring (batched into single call)
 // ============================================
 
-async function scoreWithAI(job: RawJob): Promise<{ projectRelevance: number; hiringProbability: number }> {
+async function scoreWithAI(job: RawJob): Promise<{ projectRelevance: number; hiringProbability: number; ghostJobRisk: 'low' | 'medium' | 'high'; legitimacyScore: number }> {
   try {
     const { callAIStandard, parseAIJson } = await import('../ai');
     const { getProjectsSummary } = await import('../candidate-profile');
 
-    const prompt = `Score this job opportunity for a MERN-stack developer. Return JSON only.
+    const prompt = `Score this job opportunity for a MERN-stack developer and perform a scam/ghost-job legitimacy check. Return JSON only.
 
 JOB: ${job.title} at ${job.company}
 DESCRIPTION: ${(job.description || '').substring(0, 1000)}
@@ -214,22 +211,26 @@ DESCRIPTION: ${(job.description || '').substring(0, 1000)}
 CANDIDATE PROJECTS:
 ${getProjectsSummary()}
 
-Score these two dimensions (0-100):
-1. projectRelevance: How well do the candidate's projects demonstrate skills needed for this job?
-2. hiringProbability: Based on the posting language, how likely is this a real active hiring vs old/ghost listing?
+Evaluate:
+1. projectRelevance (0-100): How well candidate's projects demonstrate needed skills
+2. hiringProbability (0-100): Likelihood this is active hiring vs stale/ghost listing
+3. ghostJobRisk ("low" | "medium" | "high"): Is this likely a resume harvester, scam, or evergreen ghost job?
+4. legitimacyScore (0-100): Overall authenticity score
 
-Return: {"projectRelevance": number, "hiringProbability": number}`;
+Return: {"projectRelevance": number, "hiringProbability": number, "ghostJobRisk": "low"|"medium"|"high", "legitimacyScore": number}`;
 
-    const response = await callAIStandard(prompt, { maxTokens: 100, temperature: 0.2 });
-    const result = parseAIJson<{ projectRelevance: number; hiringProbability: number }>(response);
+    const response = await callAIStandard(prompt, { maxTokens: 150, temperature: 0.2 });
+    const result = parseAIJson<{ projectRelevance: number; hiringProbability: number; ghostJobRisk: 'low' | 'medium' | 'high'; legitimacyScore: number }>(response);
 
     return {
       projectRelevance: Math.max(0, Math.min(100, result.projectRelevance || 60)),
       hiringProbability: Math.max(0, Math.min(100, result.hiringProbability || 60)),
+      ghostJobRisk: result.ghostJobRisk || 'low',
+      legitimacyScore: Math.max(0, Math.min(100, result.legitimacyScore || 85)),
     };
   } catch (error) {
     console.warn('[MatchEngine] AI scoring failed, using defaults:', error);
-    return { projectRelevance: 65, hiringProbability: 65 };
+    return { projectRelevance: 65, hiringProbability: 65, ghostJobRisk: 'low', legitimacyScore: 80 };
   }
 }
 

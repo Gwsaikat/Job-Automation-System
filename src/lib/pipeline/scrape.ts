@@ -12,6 +12,7 @@ import { scrapeRemotive } from '../scrapers/remotive';
 import { scrapeRemoteOK } from '../scrapers/remoteok';
 import { scrapeUnstop } from '../scrapers/unstop';
 import { scrapeSerper } from '../scrapers/serper';
+import { scrapeHiddenJobs } from '../scrapers/hidden-jobs';
 import { runAllFilterGates, filterJobByLocation } from './filter';
 import { computeMatchScores, classifyTier, QUALIFIED_THRESHOLD } from './match-engine';
 import { runCVPipeline } from '../cv/pipeline';
@@ -95,6 +96,20 @@ export async function runDailyScrapePipeline(): Promise<PipelineStats> {
 
   console.log('[Pipeline] Starting Career OS daily pipeline...');
 
+  // Step 0.5: Get funded companies for hidden job discovery
+  let fundedCompanies: string[] = [];
+  try {
+    const fundingLeads = await prisma.fundingLead.findMany({
+      select: { company: true },
+      where: { company: { not: null } },
+      take: 15,
+      orderBy: { id: 'desc' },
+    });
+    fundedCompanies = fundingLeads.map(f => f.company).filter(Boolean) as string[];
+  } catch {
+    // Non-critical
+  }
+
   // Step 1: Fetch from ALL sources in parallel (Promise.allSettled)
   const [
     adzunaIndiaResult,
@@ -104,6 +119,7 @@ export async function runDailyScrapePipeline(): Promise<PipelineStats> {
     remoteokResult,
     unstopResult,
     serperResult,
+    hiddenJobsResult,
   ] = await Promise.allSettled([
     scrapeAdzunaIndia(),
     scrapeAdzunaRemoteUK(),
@@ -112,6 +128,7 @@ export async function runDailyScrapePipeline(): Promise<PipelineStats> {
     scrapeRemoteOK(),
     scrapeUnstop(),
     scrapeSerper(),
+    scrapeHiddenJobs(fundedCompanies),
   ]);
 
   // Collect all raw jobs
@@ -125,6 +142,7 @@ export async function runDailyScrapePipeline(): Promise<PipelineStats> {
     { name: 'Remotive', result: remotiveResult },
     { name: 'RemoteOK', result: remoteokResult },
     { name: 'Serper', result: serperResult },
+    { name: 'Hidden Jobs', result: hiddenJobsResult },
   ];
 
   for (const { name, result } of jobResults) {
@@ -330,7 +348,7 @@ export async function processAndInsertJob(rawJob: RawJob, stats?: PipelineStats)
         await prisma.job.update({
           where: { id: jobId },
           data: {
-            applicationStatus: 'Applied',
+            applicationStatus: 'Draft Ready',
             processingError: null,
             processedAt: new Date().toISOString(),
           },

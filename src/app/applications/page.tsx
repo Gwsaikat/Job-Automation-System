@@ -14,7 +14,9 @@ import {
   FileText,
   Clock,
   Trash2,
+  X,
 } from 'lucide-react';
+import { Portal } from '@/components/portal';
 
 const STAGES = [
   { id: 'Applied', title: 'Applied', color: 'border-l-blue-500' },
@@ -32,6 +34,13 @@ export default function ApplicationsPage() {
   const [notesInput, setNotesInput] = useState('');
   const [savingNotes, setSavingNotes] = useState(false);
 
+  // Manual Add Modal State
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [newTitle, setNewTitle] = useState('');
+  const [newCompany, setNewCompany] = useState('');
+  const [newStage, setNewStage] = useState('Applied');
+  const [newLocation, setNewLocation] = useState('Remote');
+
   const fetchJobs = () => {
     setLoading(true);
     fetch('/api/jobs?limit=150')
@@ -47,7 +56,6 @@ export default function ApplicationsPage() {
   }, []);
 
   const moveStage = async (id: number, newStage: string) => {
-    // Optimistic update
     setJobs((prev) =>
       prev.map((j) => (j.id === id ? { ...j, applicationStatus: newStage } : j))
     );
@@ -77,23 +85,58 @@ export default function ApplicationsPage() {
     fetchJobs();
   };
 
+  const handleAddManualJob = async () => {
+    if (!newTitle.trim() || !newCompany.trim()) return;
+    
+    // Create job via manual paste API endpoint
+    await fetch('/api/jobs/manual-paste', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        jobTitle: newTitle,
+        company: newCompany,
+        location: newLocation,
+        jobDescription: `Manual application logged into stage ${newStage}`,
+        jobUrl: `https://${newCompany.toLowerCase().replace(/\s+/g, '')}.com/careers`,
+      }),
+    });
+
+    setShowAddModal(false);
+    setNewTitle('');
+    setNewCompany('');
+    fetchJobs();
+  };
+
   return (
-    <div className="p-8 max-w-7xl mx-auto space-y-6 page-fade">
+    <div className="p-8 max-w-7xl mx-auto space-y-6 page-fade relative">
+      {/* Background Ambient Glow */}
+      <div className="absolute top-10 left-1/4 w-80 h-80 bg-[#6366f1]/10 rounded-full blur-[120px] pointer-events-none" />
+
       {/* Header */}
-      <div className="flex justify-between items-center flex-wrap gap-4">
+      <div className="flex justify-between items-center flex-wrap gap-4 relative z-10">
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-[#FAFAFA] flex items-center gap-2.5">
-            <Kanban className="w-6 h-6 text-[#6366f1]" />
+            <div className="w-8 h-8 rounded-lg bg-[#6366f1]/10 flex items-center justify-center">
+              <Kanban className="w-4 h-4 text-[#818cf8]" />
+            </div>
             <span>Applications Tracker</span>
           </h1>
           <p className="text-sm text-[#A1A1AA] mt-0.5">
             Kanban pipeline tracking every application from staging to offer.
           </p>
         </div>
+
+        <Button
+          onClick={() => setShowAddModal(true)}
+          className="h-8 px-3.5 text-xs bg-[#6366f1] hover:bg-[#4f46e5] text-white flex items-center gap-1.5"
+        >
+          <Plus className="w-4 h-4" />
+          <span>Log Application</span>
+        </Button>
       </div>
 
       {/* Kanban Board */}
-      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4 overflow-x-auto min-h-[650px] pb-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4 overflow-x-auto min-h-[650px] pb-4 relative z-10">
         {STAGES.map((stage) => {
           const stageJobs = jobs.filter(
             (j) => (j.applicationStatus || 'Applied') === stage.id
@@ -133,7 +176,7 @@ export default function ApplicationsPage() {
                       <span>{job.locationType || 'Remote'}</span>
                       {job.overallScore && (
                         <span className="text-[#818cf8] font-mono">
-                          {job.overallScore}% Match
+                          {job.overallScore}%
                         </span>
                       )}
                     </div>
@@ -174,54 +217,118 @@ export default function ApplicationsPage() {
         })}
       </div>
 
-      {/* Notes Modal / Drawer */}
-      {selectedJob && (
-        <div className="fixed inset-0 bg-[#09090B]/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-[#111827] border border-[rgba(255,255,255,0.08)] rounded-xl w-full max-w-lg p-6 space-y-4 shadow-xl">
-            <div className="flex justify-between items-start">
-              <div>
-                <h3 className="text-base font-semibold text-[#FAFAFA]">
-                  Interview & Application Notes
-                </h3>
-                <p className="text-xs text-[#A1A1AA]">
-                  {selectedJob.jobTitle} at {selectedJob.company}
-                </p>
+      {/* Manual Application Log Modal */}
+      {showAddModal && (
+        <Portal>
+          <div className="fixed inset-0 bg-[#09090B]/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 page-fade">
+            <div className="bg-[#111827] border border-[rgba(255,255,255,0.08)] rounded-xl w-full max-w-md p-6 space-y-4 shadow-xl">
+              <div className="flex justify-between items-start">
+                <h3 className="text-base font-semibold text-[#FAFAFA]">Log Application</h3>
+                <button onClick={() => setShowAddModal(false)} className="text-[#71717A] hover:text-[#FAFAFA]">
+                  <X className="w-4 h-4" />
+                </button>
               </div>
-              <button
-                onClick={() => setSelectedJob(null)}
-                className="text-[#71717A] hover:text-[#FAFAFA] text-sm font-bold"
-              >
-                ✕
-              </button>
-            </div>
 
-            <textarea
-              value={notesInput}
-              onChange={(e) => setNotesInput(e.target.value)}
-              placeholder="Log interview questions, recruiter feedback, follow-up dates..."
-              className="w-full h-40 bg-[#18181B] border border-[rgba(255,255,255,0.08)] rounded-lg p-3 text-xs text-[#FAFAFA] focus:outline-none focus:border-[#6366f1] resize-none"
-            />
+              <div className="space-y-3 text-xs">
+                <div>
+                  <label className="text-[#71717A] uppercase font-mono text-[10px] block mb-1">Job Title</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. SDE 1 / Frontend Developer"
+                    value={newTitle}
+                    onChange={(e) => setNewTitle(e.target.value)}
+                    className="w-full bg-[#18181B] border border-[rgba(255,255,255,0.08)] rounded-lg p-2.5 text-xs text-[#FAFAFA] outline-none"
+                  />
+                </div>
 
-            <div className="flex justify-end gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setSelectedJob(null)}
-                className="h-8 text-xs bg-[#18181B] text-[#A1A1AA] border-[rgba(255,255,255,0.08)]"
-              >
-                Cancel
-              </Button>
-              <Button
-                size="sm"
-                onClick={saveNotes}
-                disabled={savingNotes}
-                className="h-8 text-xs bg-[#6366f1] hover:bg-[#4f46e5] text-[#FAFAFA]"
-              >
-                {savingNotes ? 'Saving...' : 'Save Notes'}
-              </Button>
+                <div>
+                  <label className="text-[#71717A] uppercase font-mono text-[10px] block mb-1">Company Name</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Razorpay / CRED"
+                    value={newCompany}
+                    onChange={(e) => setNewCompany(e.target.value)}
+                    className="w-full bg-[#18181B] border border-[rgba(255,255,255,0.08)] rounded-lg p-2.5 text-xs text-[#FAFAFA] outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-[#71717A] uppercase font-mono text-[10px] block mb-1">Pipeline Stage</label>
+                  <select
+                    value={newStage}
+                    onChange={(e) => setNewStage(e.target.value)}
+                    className="w-full bg-[#18181B] border border-[rgba(255,255,255,0.08)] rounded-lg p-2 text-xs text-[#FAFAFA] outline-none"
+                  >
+                    {STAGES.map((s) => (
+                      <option key={s.id} value={s.id}>{s.title}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2">
+                <Button variant="outline" size="sm" onClick={() => setShowAddModal(false)} className="h-8 text-xs bg-[#18181B] text-[#A1A1AA] border-[rgba(255,255,255,0.08)]">
+                  Cancel
+                </Button>
+                <Button size="sm" onClick={handleAddManualJob} className="h-8 text-xs bg-[#6366f1] hover:bg-[#4f46e5] text-white">
+                  Log Application
+                </Button>
+              </div>
             </div>
           </div>
-        </div>
+        </Portal>
+      )}
+
+      {/* Notes Modal / Drawer */}
+      {selectedJob && (
+        <Portal>
+          <div className="fixed inset-0 bg-[#09090B]/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div className="bg-[#111827] border border-[rgba(255,255,255,0.08)] rounded-xl w-full max-w-lg p-6 space-y-4 shadow-xl">
+              <div className="flex justify-between items-start">
+                <div>
+                  <h3 className="text-base font-semibold text-[#FAFAFA]">
+                    Interview & Application Notes
+                  </h3>
+                  <p className="text-xs text-[#A1A1AA]">
+                    {selectedJob.jobTitle} at {selectedJob.company}
+                  </p>
+                </div>
+                <button
+                  onClick={() => setSelectedJob(null)}
+                  className="text-[#71717A] hover:text-[#FAFAFA] text-sm font-bold"
+                >
+                  ✕
+                </button>
+              </div>
+
+              <textarea
+                value={notesInput}
+                onChange={(e) => setNotesInput(e.target.value)}
+                placeholder="Log interview questions, recruiter feedback, follow-up dates..."
+                className="w-full h-40 bg-[#18181B] border border-[rgba(255,255,255,0.08)] rounded-lg p-3 text-xs text-[#FAFAFA] focus:outline-none focus:border-[#6366f1] resize-none"
+              />
+
+              <div className="flex justify-end gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setSelectedJob(null)}
+                  className="h-8 text-xs bg-[#18181B] text-[#A1A1AA] border-[rgba(255,255,255,0.08)]"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={saveNotes}
+                  disabled={savingNotes}
+                  className="h-8 text-xs bg-[#6366f1] hover:bg-[#4f46e5] text-[#FAFAFA]"
+                >
+                  {savingNotes ? 'Saving...' : 'Save Notes'}
+                </Button>
+              </div>
+            </div>
+          </div>
+        </Portal>
       )}
     </div>
   );

@@ -10,7 +10,9 @@ import {
   TrendingUp,
   FileText,
   Send,
+  Brain,
   BarChart3,
+  BookOpen,
   Settings,
   ChevronLeft,
   ChevronRight,
@@ -27,6 +29,8 @@ const routes = [
   { label: 'Funding', icon: TrendingUp, href: '/funding' },
   { label: 'Resume Studio', icon: FileText, href: '/resume-studio' },
   { label: 'Outreach Hub', icon: Send, href: '/outreach' },
+  { label: 'STAR Story Bank', icon: BookOpen, href: '/interview-bank' },
+  { label: 'Intelligence', icon: Brain, href: '/intelligence' },
   { label: 'Analytics', icon: BarChart3, href: '/analytics' },
   { label: 'Settings', icon: Settings, href: '/settings' },
 ];

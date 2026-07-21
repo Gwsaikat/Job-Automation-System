@@ -12,6 +12,8 @@ import {
   Code2,
   Eye,
   RefreshCw,
+  Zap,
+  Sliders,
 } from 'lucide-react';
 
 export default function ResumeStudioPage() {
@@ -19,6 +21,17 @@ export default function ResumeStudioPage() {
   const [masterLatex, setMasterLatex] = useState('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+
+  // ATS Gap Analyzer states
+  const [jdInput, setJdInput] = useState('');
+  const [analyzingJd, setAnalyzingJd] = useState(false);
+  const [atsScore, setAtsScore] = useState(96);
+  const [matchedKeywords, setMatchedKeywords] = useState<string[]>([
+    'React.js', 'Node.js', 'TypeScript', 'Express.js', 'MongoDB', 'REST APIs', 'WebSocket', 'LangChain'
+  ]);
+  const [missingKeywords, setMissingKeywords] = useState<string[]>([
+    'GraphQL', 'AWS S3', 'Docker'
+  ]);
 
   useEffect(() => {
     fetch('/api/settings')
@@ -40,13 +53,49 @@ export default function ResumeStudioPage() {
     alert('Master LaTeX Resume template updated successfully.');
   };
 
+  const analyzeJdGap = () => {
+    if (!jdInput.trim()) return;
+    setAnalyzingJd(true);
+    setTimeout(() => {
+      const lower = jdInput.toLowerCase();
+      const skillsToTest = [
+        'React', 'Node', 'TypeScript', 'Express', 'MongoDB', 'REST API', 'WebSocket',
+        'Redis', 'LangChain', 'Docker', 'GraphQL', 'AWS', 'Python', 'System Design'
+      ];
+      
+      const found: string[] = [];
+      const missing: string[] = [];
+
+      for (const skill of skillsToTest) {
+        if (lower.includes(skill.toLowerCase())) {
+          if (['React', 'Node', 'TypeScript', 'Express', 'MongoDB', 'REST API', 'WebSocket', 'Redis', 'LangChain'].includes(skill)) {
+            found.push(skill);
+          } else {
+            missing.push(skill);
+          }
+        }
+      }
+
+      const calculatedScore = Math.min(98, Math.max(70, 75 + found.length * 3));
+      setAtsScore(calculatedScore);
+      setMatchedKeywords(found.length > 0 ? found : matchedKeywords);
+      setMissingKeywords(missing);
+      setAnalyzingJd(false);
+    }, 800);
+  };
+
   return (
-    <div className="p-8 max-w-7xl mx-auto space-y-6 page-fade">
+    <div className="p-8 max-w-7xl mx-auto space-y-6 page-fade relative">
+      {/* Background Ambient Glow */}
+      <div className="absolute top-10 left-1/3 w-96 h-96 bg-[#6366f1]/10 rounded-full blur-[140px] pointer-events-none" />
+
       {/* Header */}
-      <div className="flex justify-between items-center flex-wrap gap-4">
+      <div className="flex justify-between items-center flex-wrap gap-4 relative z-10">
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-[#FAFAFA] flex items-center gap-2.5">
-            <FileText className="w-6 h-6 text-[#6366f1]" />
+            <div className="w-8 h-8 rounded-lg bg-[#6366f1]/10 flex items-center justify-center">
+              <FileText className="w-4 h-4 text-[#818cf8]" />
+            </div>
             <span>Resume Studio</span>
           </h1>
           <p className="text-sm text-[#A1A1AA] mt-0.5">
@@ -66,7 +115,7 @@ export default function ResumeStudioPage() {
       </div>
 
       {/* Main Grid: Left Code/Preview, Right ATS Gap Analysis */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 relative z-10">
         {/* Left 2 Cols: Live Resume Code / Preview */}
         <div className="lg:col-span-2 space-y-4">
           <Card className="ag-card p-4 space-y-4">
@@ -159,16 +208,16 @@ export default function ResumeStudioPage() {
           </Card>
         </div>
 
-        {/* Right Col: ATS Score & Keyword Gap */}
+        {/* Right Col: ATS Score & Real-Time JD Gap Analyzer */}
         <div className="space-y-4">
           <Card className="ag-card p-5 space-y-4">
             <h3 className="font-semibold text-sm text-[#FAFAFA] flex items-center justify-between">
               <span>ATS Score Rating</span>
-              <span className="text-[#34d399] font-mono font-bold">96%</span>
+              <span className="text-[#34d399] font-mono font-bold">{atsScore}%</span>
             </h3>
 
             <div className="w-full bg-[#111827] h-2 rounded-full overflow-hidden border border-[rgba(255,255,255,0.08)]">
-              <div className="bg-[#34d399] h-full w-[96%]" />
+              <div className="bg-[#34d399] h-full transition-all duration-500" style={{ width: `${atsScore}%` }} />
             </div>
 
             <div className="space-y-2 pt-2 text-xs">
@@ -187,23 +236,69 @@ export default function ResumeStudioPage() {
             </div>
           </Card>
 
+          {/* Real-Time JD Analyzer */}
           <Card className="ag-card p-5 space-y-3">
-            <h3 className="font-semibold text-sm text-[#FAFAFA]">
-              Keyword Optimization
+            <h3 className="font-semibold text-sm text-[#FAFAFA] flex items-center gap-1.5">
+              <Zap className="w-4 h-4 text-[#818cf8]" /> Real-Time JD Gap Analyzer
             </h3>
-            <p className="text-xs text-[#71717A]">
-              Top keywords automatically emphasized for MERN/SDE roles:
-            </p>
-            <div className="flex flex-wrap gap-1.5 pt-1">
-              <span className="ag-badge-accent">React.js</span>
-              <span className="ag-badge-accent">Node.js</span>
-              <span className="ag-badge-accent">TypeScript</span>
-              <span className="ag-badge-accent">Express.js</span>
-              <span className="ag-badge-accent">MongoDB</span>
-              <span className="ag-badge-accent">REST APIs</span>
-              <span className="ag-badge-accent">LangChain</span>
-              <span className="ag-badge-accent">WebSocket</span>
+            <textarea
+              value={jdInput}
+              onChange={(e) => setJdInput(e.target.value)}
+              placeholder="Paste any Target Job Description to analyze keyword match..."
+              className="w-full h-24 bg-[#09090B] border border-[rgba(255,255,255,0.08)] rounded-lg p-2.5 text-xs text-[#FAFAFA] placeholder-[#71717A] outline-none focus:border-[#6366f1] resize-none"
+            />
+            <Button
+              onClick={analyzeJdGap}
+              disabled={analyzingJd || !jdInput.trim()}
+              className="w-full h-8 text-xs bg-[#6366f1] hover:bg-[#4f46e5] text-white"
+            >
+              {analyzingJd ? 'Analyzing Keywords...' : 'Calculate ATS Match'}
+            </Button>
+          </Card>
+
+          {/* Live Skill Keyword Heatmap & Smart Inject */}
+          <Card className="ag-card p-5 space-y-3">
+            <div className="flex items-center justify-between">
+              <h3 className="font-semibold text-sm text-[#FAFAFA] flex items-center gap-1.5">
+                <Sparkles className="w-4 h-4 text-[#34d399]" /> Candidate Skill Heatmap
+              </h3>
+              <span className="text-[11px] font-mono text-[#34d399]">{matchedKeywords.length} Active</span>
             </div>
+            
+            <div className="flex flex-wrap gap-1.5">
+              {matchedKeywords.map((kw, i) => (
+                <span key={i} className="ag-badge-green font-mono">{kw}</span>
+              ))}
+            </div>
+
+            {missingKeywords.length > 0 && (
+              <div className="space-y-2 pt-2 border-t border-[rgba(255,255,255,0.08)]">
+                <div className="flex items-center justify-between">
+                  <h4 className="font-semibold text-xs text-[#FAFAFA]">
+                    Target JD Missing Keywords
+                  </h4>
+                  <span className="text-[11px] font-mono text-[#fbbf24]">{missingKeywords.length} Missing</span>
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {missingKeywords.map((kw, i) => (
+                    <span key={i} className="ag-badge-amber font-mono">{kw}</span>
+                  ))}
+                </div>
+                <Button
+                  size="sm"
+                  onClick={() => {
+                    const toInject = missingKeywords.join(', ');
+                    if (masterLatex && !masterLatex.includes(missingKeywords[0])) {
+                      setMasterLatex(prev => prev.replace('\\end{document}', `% Injected Missing Target Keywords: ${toInject}\n\\end{document}`));
+                      alert(`Injected [${toInject}] into LaTeX master template!`);
+                    }
+                  }}
+                  className="w-full h-7 text-[11px] bg-[#fbbf24]/10 hover:bg-[#fbbf24]/20 text-[#fbbf24] border border-[#fbbf24]/30 mt-2 font-medium"
+                >
+                  Inject Missing Skills to LaTeX
+                </Button>
+              </div>
+            )}
           </Card>
 
           <Card className="ag-card p-5 space-y-3">

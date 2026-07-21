@@ -52,6 +52,19 @@ model Job {
   linkedinNote          String?  @map("linkedin_note")
   founderMessage        String?  @map("founder_message")
   hrMessage             String?  @map("hr_message")
+  // ---- v2.0: Contact Discovery ----
+  contactSource         String?  @map("contact_source")
+  contactConfidence     String?  @map("contact_confidence")
+  // ---- v2.0: Company Intelligence ----
+  companyIntel          String?  @map("company_intel")
+  companyDomain         String?  @map("company_domain")
+  companyStage          String?  @map("company_stage")
+  // ---- v2.0: Psychological Analysis ----
+  psychProfile          String?  @map("psych_profile")
+  // ---- v2.0: Enhanced Outreach ----
+  referralMessage       String?  @map("referral_message")
+  employeeReferral      String?  @map("employee_referral")
+  followUpScheduled     String?  @map("follow_up_scheduled")
   notes                 String?
   createdAt             String   @default("") @map("created_at")
 

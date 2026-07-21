@@ -25,13 +25,15 @@ interface JSearchResponse {
   data: JSearchJob[];
 }
 
-// Simpler, more targeted queries that actually yield results
 const JSEARCH_QUERIES = [
-  { query: 'software engineer fresher India', name: 'SWE Fresher India' },
-  { query: 'full stack developer fresher India', name: 'Full Stack Fresher India' },
-  { query: 'react developer junior remote', name: 'React Junior Remote' },
-  { query: 'nodejs developer remote entry level', name: 'NodeJS Junior Remote' },
-  { query: 'backend developer fresher remote', name: 'Backend Junior Remote' },
+  { query: 'MERN stack developer fresher India remote', name: 'MERN Fresher India Remote' },
+  { query: 'full stack developer entry level India remote', name: 'Full Stack Entry Level' },
+  { query: 'backend developer MERN nodejs fresher India', name: 'Backend MERN Fresher' },
+  { query: 'AI full stack developer remote India', name: 'AI Full Stack Remote' },
+  { query: 'software engineer fresher Kolkata Bangalore remote', name: 'SWE Fresher India' },
+  { query: 'graduate engineer trainee software engineer India', name: 'GET Software India' },
+  { query: 'react nodejs developer junior remote worldwide', name: 'React Node Remote Worldwide' },
+  { query: 'associate software engineer fresher India remote', name: 'Associate SWE Fresher' },
 ];
 
 async function fetchJSearch(query: string, sourceName: string): Promise<RawJob[]> {

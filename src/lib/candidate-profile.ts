@@ -131,26 +131,28 @@ export const CANDIDATE = {
 
   // ---- Role Preferences ----
   acceptRoleTitles: [
-    'software engineer', 'software developer', 'sde', 'full stack', 'fullstack',
-    'frontend', 'front-end', 'front end', 'backend', 'back-end', 'back end',
-    'mern', 'node.js', 'nodejs', 'react', 'typescript', 'next.js', 'nextjs',
-    'web developer', 'platform engineer', 'application developer', 'developer',
-    'javascript developer', 'full-stack',
+    'full stack developer', 'fullstack developer', 'full-stack developer', 'full stack', 'fullstack',
+    'mern stack developer', 'mern developer', 'mern stack', 'mern',
+    'backend developer', 'back-end developer', 'back end developer', 'backend engineer',
+    'ai full stack developer', 'ai fullstack developer', 'ai engineer', 'ai developer',
+    'software engineer', 'software developer', 'sde', 'sde 1', 'sde-1', 'sde i', 'associate software engineer',
+    'graduate trainee', 'graduate engineer trainee', 'get', 'fresher', 'freshers', 'trainee', 'apprentice',
+    'frontend developer', 'front-end developer', 'react developer', 'node developer', 'typescript developer',
   ],
 
   rejectRoleTitles: [
-    'senior', 'staff', 'architect', 'manager', 'lead', 'principal',
-    'director', 'vp', 'head of', 'chief', 'sr.', 'sr ',
+    'senior', 'sr.', 'sr', 'staff', 'architect', 'manager', 'lead', 'principal',
+    'director', 'vp', 'head of', 'chief', 'mid-level', 'mid level', 'experienced',
   ],
 
   acceptExperienceLevels: [
     '0', 'fresher', 'freshers', 'graduate', 'campus', 'entry level', 'entry-level',
-    'associate', 'new grad', 'new graduate', '0-1', '0-2', '1-2', 'junior',
-    'intern', 'trainee', 'apprentice',
+    'associate', 'new grad', 'new graduate', '0-1', '0-1 year', '0-1 yrs', '1 year',
+    'junior', 'intern', 'trainee', 'apprentice',
   ],
 
   rejectExperienceLevels: [
-    '3+', '4+', '5+', '7+', '10+', '3-5', '5-7', '5-10', '7-10',
+    '2+', '3+', '4+', '5+', '7+', '10+', '2-3', '2-4', '3-5', '5-7', '5-10', '7-10',
     'senior', 'mid-senior', 'experienced',
   ],
 

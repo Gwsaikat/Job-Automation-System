@@ -4,6 +4,7 @@
 
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/db';
+import { isGmailConnected } from '@/lib/outreach/gmail';
 
 export async function GET() {
   try {
@@ -27,6 +28,33 @@ export async function GET() {
           allScores.reduce((sum, j) => sum + (j.atsScore || 0), 0) / allScores.length
         )
       : 0;
+
+    // Interview count
+    const interviewCount = await prisma.job.count({
+      where: { applicationStatus: 'Interview' },
+    });
+
+    // Active pipeline (Interview + Applied)
+    const activePipelineCount = await prisma.job.count({
+      where: { applicationStatus: { in: ['Interview', 'Applied'] } },
+    });
+
+    // Average ATS score for tailored CVs only
+    const tailoredCvScores = await prisma.job.findMany({
+      where: { cvUpdated: 1, atsScore: { not: null } },
+      select: { atsScore: true },
+    });
+    const avgTailoredAtsScore = tailoredCvScores.length > 0
+      ? Math.round(
+          tailoredCvScores.reduce((sum, j) => sum + (j.atsScore || 0), 0) / tailoredCvScores.length
+        )
+      : 0;
+
+    // Highest salary found in qualified jobs
+    const salaryJobs = await prisma.job.findMany({
+      where: { matchTier: 'qualified', salaryDisplay: { not: null } },
+      select: { salaryDisplay: true },
+    });
 
     const coldEmailsPending = await prisma.job.count({
       where: {
@@ -130,6 +158,47 @@ export async function GET() {
       },
     });
 
+    // Recent pipeline activity from AppState
+    const activityKeys = [
+      'last_scrape_run',
+      'last_funding_run',
+      'last_followup_run',
+      'last_digest_run',
+      'last_skillsgap_run',
+    ];
+    const activityLabels: Record<string, { label: string; color: string }> = {
+      last_scrape_run: { label: 'Job scraping pipeline completed', color: '#6366f1' },
+      last_funding_run: { label: 'Funding news pipeline completed', color: '#34d399' },
+      last_followup_run: { label: 'Follow-up email check completed', color: '#c084fc' },
+      last_digest_run: { label: 'Weekly digest email sent', color: '#fbbf24' },
+      last_skillsgap_run: { label: 'Skills gap report generated', color: '#22d3ee' },
+    };
+
+    const activityStates = await prisma.appState.findMany({
+      where: { key: { in: activityKeys } },
+    });
+
+    const recentActivity = activityStates
+      .filter(s => s.value)
+      .map(s => ({
+        label: activityLabels[s.key]?.label || s.key,
+        color: activityLabels[s.key]?.color || '#6366f1',
+        timestamp: s.value!,
+      }))
+      .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+      .slice(0, 3);
+
+    // Gmail connection status
+    let gmailConnected = false;
+    try {
+      gmailConnected = await isGmailConnected();
+    } catch { /* non-critical */ }
+
+    // Cold emails sent count
+    const coldEmailsSent = await prisma.job.count({
+      where: { coldMailSent: 1 },
+    });
+
     // Last run timestamps
     const lastRuns = await prisma.appState.findMany({
       where: {
@@ -155,10 +224,15 @@ export async function GET() {
         pendingApplications,
         avgAtsScore,
         avgOverallScore,
+        avgTailoredAtsScore,
         coldEmailsPending,
+        coldEmailsSent,
         totalJobs: allJobs.length,
         qualifiedCount,
         belowThresholdCount,
+        interviewCount,
+        activePipelineCount,
+        gmailConnected,
       },
       charts: {
         jobsBySource,
@@ -168,6 +242,7 @@ export async function GET() {
         qualityFunnel,
       },
       recentJobs,
+      recentActivity,
       lastRuns: lastRunMap,
     });
   } catch (error) {

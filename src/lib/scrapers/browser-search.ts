@@ -1,10 +1,10 @@
 // ============================================
-// Headless Browser (Puppeteer) Search Utility
+// Headless Browser (Playwright) Search Utility
 // Scrapes Google Search organic results to get
 // highly accurate jobs and recruiter LinkedIn profiles.
 // ============================================
 
-import puppeteer from 'puppeteer';
+import { chromium } from 'playwright';
 import { RawJob } from './types';
 
 export interface ScrapedSearchResult {
@@ -14,25 +14,22 @@ export interface ScrapedSearchResult {
 }
 
 /**
- * Perform an organic Google search using Puppeteer
+ * Perform an organic Google search using Playwright
  */
 export async function searchGoogleWithPuppeteer(query: string): Promise<ScrapedSearchResult[]> {
   console.log(`[Browser Search] Searching Google for: "${query}"`);
   
-  const browser = await puppeteer.launch({
+  const browser = await chromium.launch({
     headless: true,
     args: ['--no-sandbox', '--disable-setuid-sandbox'],
   });
 
   try {
-    const page = await browser.newPage();
-    // Realistic desktop User-Agent
-    await page.setUserAgent(
-      'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
-    );
-    
-    // Set viewport
-    await page.setViewport({ width: 1280, height: 800 });
+    const context = await browser.newContext({
+      userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+      viewport: { width: 1280, height: 800 },
+    });
+    const page = await context.newPage();
 
     const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(query)}`;
     await page.goto(searchUrl, { waitUntil: 'domcontentloaded' });
@@ -69,7 +66,7 @@ export async function searchGoogleWithPuppeteer(query: string): Promise<ScrapedS
     console.log(`[Browser Search] Found ${results.length} organic search results.`);
     return results;
   } catch (error) {
-    console.error('[Browser Search] Puppeteer search failed:', error);
+    console.error('[Browser Search] Playwright search failed:', error);
     return [];
   } finally {
     await browser.close();

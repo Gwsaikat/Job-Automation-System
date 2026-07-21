@@ -18,59 +18,49 @@ interface SerperResponse {
   organic: SerperResult[];
 }
 
-// Career OS — Expanded queries across ALL 6 source tiers
+/// Career OS — Global Multi-Platform Scraper across ALL major job portals
 const SERPER_QUERIES = [
-  // ---- Tier 1-2: ATS Platforms (Greenhouse, Lever, Ashby, Workday, SmartRecruiters, Jobvite) ----
+  // ---- 1. Major Job Portals (LinkedIn, Naukri, Indeed, Wellfound, Cutshort, Instahyre, Glassdoor, Foundit) ----
+  'site:linkedin.com/jobs "full stack" OR "MERN" OR "backend" OR "software engineer" fresher OR "0-1 year" OR "entry level" India OR remote',
+  'site:linkedin.com/jobs "AI full stack" OR "MERN stack" OR "graduate trainee" India OR remote 2026',
+  'site:naukri.com "full stack" OR "MERN" OR "backend developer" OR "software engineer" fresher OR "0-1 year" Kolkata OR Bangalore OR remote',
+  'site:naukri.com "graduate engineer trainee" OR "associate software engineer" "0 years" Kolkata OR remote',
+  'site:in.indeed.com OR site:indeed.com "software engineer" OR "full stack" OR "MERN" fresher OR "entry level" India remote',
+  'site:wellfound.com OR site:angel.co "full stack" OR "MERN" OR "software engineer" OR "backend" fresher OR "0-1" India remote',
+  'site:cutshort.io "full stack" OR "MERN" OR "backend" OR "AI" fresher OR junior India Kolkata',
+  'site:instahyre.com "software engineer" OR "MERN" OR "backend" entry level India',
+  'site:ambitionbox.com "software engineer" OR "full stack" OR "MERN" fresher India',
+  'site:foundit.in "software engineer" OR "MERN" fresher Kolkata OR Bangalore OR remote',
+  'site:glassdoor.co.in OR site:glassdoor.com "software engineer" fresher OR "entry level" remote India',
+
+  // ---- 2. ATS Platforms (Greenhouse, Lever, Ashby, Workday, SmartRecruiters, Jobvite) ----
   'site:boards.greenhouse.io react OR nodejs OR "full stack" fresher OR junior OR "entry level" India OR remote 2026',
   'site:jobs.lever.co "software engineer" OR "full stack developer" entry level OR fresher OR junior',
   'site:jobs.ashbyhq.com developer OR engineer junior OR fresher India OR remote',
   'site:smartrecruiters.com software engineer fresher OR "new grad" India 2026',
   'site:myworkdayjobs.com "software developer" OR "software engineer" entry level India',
   'site:jobs.jobvite.com software engineer fresher OR junior India remote',
-
-  // ---- Tier 2 continued: Broader ATS searches ----
   '(site:boards.greenhouse.io OR site:jobs.lever.co) react nextjs nodejs MERN fresher 2026',
   '(site:jobs.ashbyhq.com OR site:jobs.workable.com) "full stack" OR "frontend" OR "backend" junior India remote',
 
-  // ---- Tier 3: Job Boards (Wellfound, CutShort, Instahyre, YC, Naukri) ----
-  'site:wellfound.com software engineer OR developer fresher OR junior India remote',
-  'site:cutshort.io react nodejs OR MERN fresher India Kolkata OR Bangalore',
-  'site:instahyre.com software developer entry level India',
-  'site:work.ycombinator.com software engineer OR developer remote',
-  'site:naukri.com react nodejs fresher OR "0-2 years" Kolkata OR Bangalore OR remote',
-
-  // ---- Tier 3 continued: General job board coverage ----
-  'software engineer fresher India 2026 apply greenhouse lever',
-  'react developer junior remote 2026 apply greenhouse lever ashby',
-  'full stack developer entry level India 2026 careers apply',
-  'nodejs developer fresher remote 2026 jobs hiring',
-  'MERN stack developer fresher India 2026 hiring apply now',
-  'SDE 1 software engineer India 2026 new grad hiring',
-  'javascript typescript react remote developer jobs 2026',
-
-  // ---- Tier 4: Remote Boards ----
+  // ---- 3. Global Remote Boards ----
+  'site:remoteok.com react OR nodejs OR "full stack" developer 2026',
   'site:weworkremotely.com "full stack" OR react OR nodejs developer',
   'site:otta.com software engineer entry level OR junior remote',
   'site:himalayas.app react OR nodejs developer remote',
-  'site:remoteok.com react OR nodejs developer 2026',
   'site:arc.dev react OR nodejs developer remote junior',
+  'site:work.ycombinator.com software engineer OR developer remote',
 
-  // ---- Tier 5: Startup & Funding Portals ----
-  'site:angel.co software engineer India remote startup hiring',
-  '"funded startup" India software engineer react nodejs fresher series A B 2026 remote',
-  'frontend developer junior India 2026 workday smartrecruiters apply',
-  'software developer intern 2026 India Google Amazon Microsoft',
-  'backend developer entry level remote 2026 startup hiring',
+  // ---- 4. Role Specific Coverage (MERN, AI Fullstack, Backend, SDE 1, Graduate Trainee) ----
+  '"MERN stack developer" fresher OR "0-1 year" India OR remote hiring apply',
+  '"AI full stack developer" OR "AI engineer" fresher OR entry level remote 2026',
+  '"backend developer" MERN nodejs fresher OR "0-1 yrs" Kolkata OR remote',
+  '"software engineer" "max match" OR "skills" fresher India 2026 hiring',
+  '"graduate engineer trainee" OR "graduate trainee" software India 2026',
 
-  // ---- Tier 6: Community & GitHub Hiring ----
-  'site:github.com hiring "software engineer" OR "developer" India remote 2026',
-  'site:reddit.com/r/remotejs OR site:reddit.com/r/forhire react developer hiring',
-
-  // ---- FAANG & Big Tech ----
+  // ---- 5. Indian Tech Unicorns & Global Leaders ----
   'Google Amazon Netflix software engineer SDE fresher new grad 2026 India',
   'Meta Microsoft Apple Adobe Salesforce software engineer fresher India 2026',
-
-  // ---- Indian Unicorns & Growth Companies ----
   'Zepto Razorpay CRED Groww Setu software engineer fresher India',
   'Flipkart Swiggy Zomato PhonePe Paytm software engineer SDE fresher India 2026',
   'Zerodha Postman BrowserStack Chargebee Freshworks software engineer fresher India 2026',
@@ -80,7 +70,17 @@ const SERPER_QUERIES = [
 function extractCompanyFromUrl(url: string): string {
   try {
     const parsed = new URL(url);
-    const host = parsed.hostname;
+    const host = parsed.hostname.toLowerCase();
+
+    if (host.includes('linkedin.com')) return 'LinkedIn Job';
+    if (host.includes('naukri.com')) return 'Naukri Listing';
+    if (host.includes('indeed.com')) return 'Indeed Job';
+    if (host.includes('wellfound.com') || host.includes('angel.co')) return 'Wellfound Startup';
+    if (host.includes('cutshort.io')) return 'Cutshort Listing';
+    if (host.includes('instahyre.com')) return 'Instahyre Listing';
+    if (host.includes('ambitionbox.com')) return 'AmbitionBox';
+    if (host.includes('foundit.in') || host.includes('monsterindia.com')) return 'Foundit Listing';
+    if (host.includes('glassdoor.com') || host.includes('glassdoor.co.in')) return 'Glassdoor Job';
 
     // boards.greenhouse.io/company-name/...
     if (host.includes('greenhouse.io')) {

@@ -1,9 +1,9 @@
 // ============================================
 // CV PDF Rendering — Section 5.5
-// Puppeteer HTML→PDF at A4 size with 1-page enforcement
+// Playwright HTML→PDF at A4 size with 1-page enforcement
 // ============================================
 
-import puppeteer from 'puppeteer';
+import { chromium } from 'playwright';
 import * as fs from 'fs';
 import * as path from 'path';
 import { exec } from 'child_process';
@@ -46,7 +46,7 @@ export async function renderCVtoPDF(
   const filename = `cv_${jobId}_${Date.now()}.pdf`;
   const pdfPath = path.join(storageDir, filename);
 
-  const browser = await puppeteer.launch({
+  const browser = await chromium.launch({
     headless: true,
     args: ['--no-sandbox', '--disable-setuid-sandbox'],
   });

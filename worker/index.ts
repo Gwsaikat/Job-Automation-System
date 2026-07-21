@@ -109,6 +109,7 @@ safeCron('Telegram Poll', '*/3 * * * *', async () => {
         console.log(`[Worker] Telegram job already processed, skipping: ${job.title}`);
         continue;
       }
+      existingIds.add(job.sourceId);
       await processAndInsertJob(job);
     }
   }

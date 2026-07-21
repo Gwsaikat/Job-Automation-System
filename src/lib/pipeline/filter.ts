@@ -87,7 +87,9 @@ export function filterByVisa(job: RawJob): GateResult {
 // ============================================
 
 export function filterByRole(job: RawJob): GateResult {
-  const titleLower = (job.title || '').toLowerCase();
+  const rawTitle = (job.title || '').toLowerCase();
+  // Normalize underscores, dashes, slashes, and dots to spaces for clean word boundary checks
+  const titleLower = rawTitle.replace(/[_|\-/\.]/g, ' ');
 
   // Check for non-tech roles first
   for (const kw of NON_TECH_KEYWORDS) {
@@ -100,11 +102,9 @@ export function filterByRole(job: RawJob): GateResult {
     }
   }
 
-  // Check for rejected seniority levels
+  // Check for rejected seniority levels (strict check)
   for (const reject of CANDIDATE.rejectRoleTitles) {
-    if (containsWord(titleLower, reject)) {
-      // Exception: "team lead" for very small teams, "senior" in company name, etc.
-      // But we err on the side of rejection per spec
+    if (titleLower.includes(reject) || containsWord(titleLower, reject) || rawTitle.toLowerCase().includes(reject)) {
       return {
         passed: false,
         rejectReason: `Seniority too high: title contains "${reject}"`,
@@ -115,7 +115,7 @@ export function filterByRole(job: RawJob): GateResult {
 
   // Check if the role title matches at least one accepted keyword
   const hasAcceptedRole = CANDIDATE.acceptRoleTitles.some(accept =>
-    titleLower.includes(accept)
+    titleLower.includes(accept) || rawTitle.toLowerCase().includes(accept)
   );
 
   if (!hasAcceptedRole) {
@@ -139,11 +139,99 @@ export function filterByRole(job: RawJob): GateResult {
 // ============================================
 
 export function filterByExperience(job: RawJob): GateResult {
-  const textLower = `${job.title} ${job.description?.substring(0, 1000) || ''}`.toLowerCase();
+  const rawTitle = (job.title || '').toLowerCase();
+  const titleLower = rawTitle.replace(/[_|\-/\.]/g, ' ');
+  const descFirst1500 = (job.description?.substring(0, 1500) || '').toLowerCase().replace(/[_|\-/\.]/g, ' ');
+  const textLower = `${titleLower} ${descFirst1500}`;
 
-  // Check for explicit rejection experience levels
+  // ---- Hard reject: Senior/Lead/Principal/Manager in title ----
+  const seniorTitlePatterns = [
+    'senior', 'sr', 'staff', 'principal', 'lead',
+    'manager', 'director', 'head of', 'vp', 'chief',
+    'architect', 'distinguished', 'fellow',
+  ];
+  for (const pattern of seniorTitlePatterns) {
+    if (titleLower.includes(pattern) || rawTitle.includes(pattern)) {
+      return {
+        passed: false,
+        rejectReason: `Senior-level title: contains "${pattern}"`,
+        gate: 'experience',
+      };
+    }
+  }
+
+  // ---- Hard reject: Mid-level indicators in title ----
+  const midLevelTitlePatterns = ['mid-level', 'mid level', 'midlevel', 'mid-senior', 'experienced'];
+  for (const pattern of midLevelTitlePatterns) {
+    if (titleLower.includes(pattern)) {
+      return {
+        passed: false,
+        rejectReason: `Mid/Senior-level title: contains "${pattern}"`,
+        gate: 'experience',
+      };
+    }
+  }
+
+  // ---- Hard reject: "SDE 2", "SDE 3", "SDE II", "SDE III", "Level 2+", "L3+", "IC3+" ----
+  const levelPatterns = [
+    /\bsde[\s-]?[2-9]\b/i,
+    /\bsde[\s-]?ii+\b/i,
+    /\blevel[\s-]?[3-9]\b/i,
+    /\b[li]c?[3-9]\+?\b/i,
+    /\bsoftware engineer[\s-]?ii+\b/i,
+    /\bsoftware engineer[\s-]?[2-9]\b/i,
+    /\bdeveloper[\s-]?ii+\b/i,
+    /\bdeveloper[\s-]?[2-9]\b/i,
+  ];
+  for (const pattern of levelPatterns) {
+    if (pattern.test(titleLower)) {
+      return {
+        passed: false,
+        rejectReason: `Above entry-level: title matches "${pattern.source}"`,
+        gate: 'experience',
+      };
+    }
+  }
+
+  // ---- Numeric year extraction from description ----
+  // Catches: "2+ years", "3-5 years", "minimum 2 years", "at least 3 years",
+  // "2 years of experience", "requires 3 years", etc.
+  const yearExtractionPatterns = [
+    // "X+ years" or "X + years"
+    /(\d+)\s*\+\s*(?:years?|yrs?)\s*(?:of\s+)?(?:experience|exp)?/gi,
+    // "minimum X years" or "min X years"
+    /(?:minimum|min\.?)\s*(?:of\s+)?(\d+)\s*(?:years?|yrs?)/gi,
+    // "at least X years"
+    /at\s+least\s+(\d+)\s*(?:years?|yrs?)/gi,
+    // "X-Y years" (take the lower bound)
+    /(\d+)\s*[-–—to]+\s*\d+\s*(?:years?|yrs?)\s*(?:of\s+)?(?:experience|exp)?/gi,
+    // "X years of experience" or "X years experience" or "X years professional experience"
+    /(\d+)\s*(?:years?|yrs?)\s+(?:of\s+)?(?:professional\s+|relevant\s+|hands[- ]on\s+|industry\s+|work\s+)?(?:experience|exp)/gi,
+    // "experience: X years" or "experience: X+ years"
+    /experience\s*[:=]\s*(\d+)\s*\+?\s*(?:years?|yrs?)?/gi,
+    // "requires X years"
+    /require[sd]?\s+(\d+)\s*\+?\s*(?:years?|yrs?)/gi,
+    // "X years in software" or "X years in development"
+    /(\d+)\s*(?:years?|yrs?)\s+(?:in|of|with)\s+(?:software|development|engineering|programming|coding)/gi,
+  ];
+
+  for (const pattern of yearExtractionPatterns) {
+    pattern.lastIndex = 0; // Reset regex state
+    let match;
+    while ((match = pattern.exec(textLower)) !== null) {
+      const years = parseInt(match[1], 10);
+      if (years >= 2) {
+        return {
+          passed: false,
+          rejectReason: `Requires ${years}+ years experience (fresh graduate only)`,
+          gate: 'experience',
+        };
+      }
+    }
+  }
+
+  // ---- Phrase-based rejection from candidate profile ----
   for (const reject of CANDIDATE.rejectExperienceLevels) {
-    // Look for patterns like "3+ years", "5-7 years experience"
     const yearPattern = new RegExp(`\\b${reject.replace('+', '\\+')}\\s*(?:years?|yrs?)`, 'i');
     if (yearPattern.test(textLower)) {
       return {
@@ -152,16 +240,29 @@ export function filterByExperience(job: RawJob): GateResult {
         gate: 'experience',
       };
     }
-    // Also check for "senior" level
-    if (reject === 'senior' && containsWord(textLower.substring(0, 200), 'senior')) {
-      // Only reject if "senior" is in the title portion, not deep in description
-      if (containsWord((job.title || '').toLowerCase(), 'senior')) {
-        return {
-          passed: false,
-          rejectReason: 'Senior-level position',
-          gate: 'experience',
-        };
-      }
+  }
+
+  // ---- Additional description-level red flags ----
+  const descRedFlags = [
+    'proven track record',
+    'extensive experience',
+    'deep expertise',
+    'seasoned professional',
+    'well-versed professional',
+    'strong professional background',
+    'significant experience',
+    'considerable experience',
+    'advanced knowledge required',
+    'expert-level',
+    'expert level',
+  ];
+  for (const flag of descRedFlags) {
+    if (descFirst1500.includes(flag)) {
+      return {
+        passed: false,
+        rejectReason: `Experience red flag in description: "${flag}"`,
+        gate: 'experience',
+      };
     }
   }
 

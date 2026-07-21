@@ -20,7 +20,9 @@ import {
   MapPin,
   DollarSign,
   Sparkles,
+  Info,
 } from 'lucide-react';
+import { Portal } from '@/components/portal';
 
 export default function JobsPage() {
   const [jobs, setJobs] = useState<any[]>([]);
@@ -79,15 +81,39 @@ export default function JobsPage() {
       <div className="flex justify-between items-center flex-wrap gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-[#FAFAFA] flex items-center gap-2.5">
-            <Briefcase className="w-6 h-6 text-[#6366f1]" />
-            <span>Job Explorer</span>
+            <div className="w-8 h-8 rounded-lg bg-[#6366f1]/10 flex items-center justify-center">
+              <Briefcase className="w-4 h-4 text-[#818cf8]" />
+            </div>
+            <span>Qualified Job Pipeline</span>
           </h1>
-          <p className="text-sm text-[#A1A1AA] mt-0.5">
-            Real-time scraped software engineering roles matched against your profile.
-          </p>
+          <div className="text-sm text-[#A1A1AA] mt-0.5 flex items-center gap-2">
+            <span>Showing qualified roles tailored specifically for your candidate profile.</span>
+            <Badge className="bg-[#34d399]/10 text-[#34d399] text-[10px] font-mono border-[#34d399]/30">
+              🎓 Fresh Graduate Only (&lt; 1 Yr Exp)
+            </Badge>
+          </div>
         </div>
 
         <div className="flex items-center gap-2">
+          <Button
+            onClick={async () => {
+              alert('Syncing Gmail inbox for recruiter responses...');
+              const res = await fetch('/api/settings/gmail/sync', { method: 'POST' });
+              const data = await res.json();
+              if (data.success) {
+                alert(`Gmail Sync complete! Checked ${data.checkedCount} messages. ${data.updatedCount} job statuses auto-updated.`);
+                fetchJobs();
+              } else {
+                alert(data.error || 'Failed to sync Gmail responses.');
+              }
+            }}
+            variant="outline"
+            className="h-8 px-3 text-xs bg-[#111827] border-[rgba(255,255,255,0.08)] hover:border-[#34d399]/40 text-[#34d399]"
+          >
+            <Send className="w-3.5 h-3.5 mr-1.5" />
+            Auto-Sync Gmail Replies
+          </Button>
+
           <Button
             onClick={fetchJobs}
             variant="outline"
@@ -217,12 +243,21 @@ export default function JobsPage() {
                 jobs.map((job) => (
                   <tr
                     key={job.id}
-                    className="hover:bg-[#22222A] transition-colors cursor-pointer"
-                    onClick={() => setSelectedJob(job)}
+                    className="hover:bg-[#22222A] transition-colors"
                   >
                     <td className="px-4 py-3.5">
-                      <div className="font-semibold text-[#FAFAFA] text-xs hover:text-[#818cf8] transition-colors">
-                        {job.jobTitle}
+                      <div className="flex items-center gap-2">
+                        {/* Direct Link to Job */}
+                        <a
+                          href={job.jobUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="font-semibold text-[#FAFAFA] text-xs hover:text-[#818cf8] hover:underline transition-colors flex items-center gap-1 group"
+                          title="Open original job posting in new tab"
+                        >
+                          <span>{job.jobTitle}</span>
+                          <ExternalLink className="w-3 h-3 text-[#71717A] group-hover:text-[#818cf8] shrink-0" />
+                        </a>
                       </div>
                       <div className="text-[11px] text-[#71717A] flex items-center gap-1.5 mt-0.5">
                         <span>{job.company}</span>
@@ -244,7 +279,7 @@ export default function JobsPage() {
 
                     <td className="px-4 py-3.5">
                       <span className={`ag-badge-${(job.overallScore || 90) >= 85 ? 'accent' : 'green'}`}>
-                        {job.overallScore || 90}% Match
+                        {job.overallScore || 90}%
                       </span>
                     </td>
 
@@ -254,7 +289,25 @@ export default function JobsPage() {
                       </span>
                     </td>
 
-                    <td className="px-4 py-3.5 text-right space-x-2" onClick={(e) => e.stopPropagation()}>
+                    <td className="px-4 py-3.5 text-right space-x-1.5 whitespace-nowrap">
+                      {/* Direct Open Job Posting Button */}
+                      <a href={job.jobUrl} target="_blank" rel="noreferrer">
+                        <Button size="sm" className="h-7 text-[11px] bg-[#6366f1] hover:bg-[#4f46e5] text-white px-2.5 font-medium">
+                          Open Job <ExternalLink className="w-3 h-3 ml-1" />
+                        </Button>
+                      </a>
+
+                      {/* View Details Modal Button */}
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => setSelectedJob(job)}
+                        className="h-7 text-[11px] text-[#A1A1AA] hover:text-[#FAFAFA] hover:bg-[#111827] px-2"
+                        title="Inspect full description & breakdown"
+                      >
+                        <Info className="w-3 h-3 mr-1" /> Details
+                      </Button>
+
                       {job.cvPdfPath ? (
                         <a href={`/api/jobs/cv?id=${job.id}`} target="_blank" rel="noreferrer">
                           <Button size="sm" variant="ghost" className="h-7 text-[11px] text-[#34d399] hover:bg-[#34d399]/10 px-2">
@@ -266,7 +319,7 @@ export default function JobsPage() {
                           size="sm"
                           variant="ghost"
                           onClick={() => processJob(job.id)}
-                          className="h-7 text-[11px] text-[#6366f1] hover:bg-[#6366f1]/10 px-2"
+                          className="h-7 text-[11px] text-[#818cf8] hover:bg-[#6366f1]/10 px-2"
                         >
                           Tailor
                         </Button>
@@ -274,7 +327,7 @@ export default function JobsPage() {
 
                       {job.coldMailDraftId && (
                         <a href={`https://mail.google.com/mail/u/0/#drafts/${job.coldMailDraftId}`} target="_blank" rel="noreferrer">
-                          <Button size="sm" variant="ghost" className="h-7 text-[11px] text-[#818cf8] hover:bg-[#818cf8]/10 px-2">
+                          <Button size="sm" variant="ghost" className="h-7 text-[11px] text-[#c084fc] hover:bg-[#c084fc]/10 px-2">
                             Draft
                           </Button>
                         </a>
@@ -290,86 +343,181 @@ export default function JobsPage() {
 
       {/* Two-Column Job Details Modal */}
       {selectedJob && (
-        <div className="fixed inset-0 bg-[#09090B]/85 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-[#111827] border border-[rgba(255,255,255,0.08)] rounded-xl w-full max-w-4xl max-h-[85vh] overflow-hidden flex flex-col shadow-2xl">
-            {/* Modal Header */}
-            <div className="p-5 border-b border-[rgba(255,255,255,0.08)] flex justify-between items-start bg-[#18181B]">
-              <div>
-                <h3 className="text-lg font-bold text-[#FAFAFA]">
-                  {selectedJob.jobTitle}
-                </h3>
-                <p className="text-xs text-[#A1A1AA] flex items-center gap-2 mt-0.5">
-                  <Building className="w-3.5 h-3.5 text-[#71717A]" /> {selectedJob.company}
-                  <span>•</span>
-                  <MapPin className="w-3.5 h-3.5 text-[#71717A]" /> {selectedJob.locationType || 'Remote'}
-                </p>
-              </div>
-              <button
-                onClick={() => setSelectedJob(null)}
-                className="text-[#71717A] hover:text-[#FAFAFA] font-bold text-base px-2"
-              >
-                ✕
-              </button>
-            </div>
-
-            {/* Modal Body: Two Columns */}
-            <div className="flex-1 overflow-y-auto grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-[rgba(255,255,255,0.08)]">
-              {/* Left Column (2 Cols): Job Description */}
-              <div className="md:col-span-2 p-6 space-y-4 text-xs text-[#A1A1AA] leading-relaxed">
+        <Portal>
+          <div className="fixed inset-0 bg-[#09090B]/85 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div className="bg-[#111827] border border-[rgba(255,255,255,0.08)] rounded-xl w-full max-w-4xl max-h-[85vh] overflow-hidden flex flex-col shadow-2xl">
+              {/* Modal Header */}
+              <div className="p-5 border-b border-[rgba(255,255,255,0.08)] flex justify-between items-start bg-[#18181B]">
                 <div>
-                  <h4 className="font-semibold text-xs text-[#FAFAFA] uppercase font-mono mb-2">
-                    Job Description
-                  </h4>
-                  <p className="whitespace-pre-line">
-                    {selectedJob.jobDescription || 'No description provided.'}
+                  <h3 className="text-lg font-bold text-[#FAFAFA]">
+                    {selectedJob.jobTitle}
+                  </h3>
+                  <p className="text-xs text-[#A1A1AA] flex items-center gap-2 mt-0.5">
+                    <Building className="w-3.5 h-3.5 text-[#71717A]" /> {selectedJob.company}
+                    <span>•</span>
+                    <MapPin className="w-3.5 h-3.5 text-[#71717A]" /> {selectedJob.locationType || 'Remote'}
                   </p>
                 </div>
+                <button
+                  onClick={() => setSelectedJob(null)}
+                  className="text-[#71717A] hover:text-[#FAFAFA] font-bold text-base px-2"
+                >
+                  ✕
+                </button>
               </div>
 
-              {/* Right Column (1 Col Sticky Panel): Scores & Quick Actions */}
-              <div className="p-6 space-y-4 bg-[#18181B]/50">
-                <div className="space-y-3">
+              {/* Modal Body: Two Columns */}
+              <div className="flex-1 overflow-y-auto grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-[rgba(255,255,255,0.08)]">
+                {/* Left Column (2 Cols): Job Description & Interview Prep */}
+                <div className="md:col-span-2 p-6 space-y-5 text-xs text-[#A1A1AA] leading-relaxed">
                   <div>
-                    <span className="text-[10px] font-mono text-[#71717A] uppercase block">Overall Match</span>
-                    <span className="text-xl font-bold text-[#34d399]">
-                      {selectedJob.overallScore || 90}%
-                    </span>
+                    <h4 className="font-semibold text-xs text-[#FAFAFA] uppercase font-mono mb-2 flex items-center justify-between">
+                      <span>Job Description</span>
+                      <a href={selectedJob.jobUrl} target="_blank" rel="noreferrer" className="text-[#818cf8] hover:underline text-[11px] font-normal lowercase flex items-center gap-1">
+                        <span>view original</span> <ExternalLink className="w-3 h-3" />
+                      </a>
+                    </h4>
+                    <p className="whitespace-pre-line bg-[#09090B]/50 p-3 rounded-lg border border-[rgba(255,255,255,0.04)]">
+                      {selectedJob.jobDescription || 'No description provided.'}
+                    </p>
                   </div>
 
-                  <div>
-                    <span className="text-[10px] font-mono text-[#71717A] uppercase block">Salary Compensation</span>
-                    <span className="text-sm font-semibold text-[#FAFAFA] font-mono">
-                      {selectedJob.salaryDisplay || 'Not Specified'}
-                    </span>
-                  </div>
+                  {/* AI Interview Prep Pack Section */}
+                  <div className="pt-4 border-t border-[rgba(255,255,255,0.08)] space-y-3">
+                    <div className="flex items-center justify-between">
+                      <h4 className="font-semibold text-xs text-[#FAFAFA] uppercase font-mono flex items-center gap-2">
+                        <Sparkles className="w-3.5 h-3.5 text-[#34d399]" />
+                        <span>AI Company Interview Prep Pack</span>
+                      </h4>
+                      <Button
+                        size="sm"
+                        onClick={async () => {
+                          const res = await fetch('/api/jobs/interview-prep', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ jobId: selectedJob.id }),
+                          });
+                          const data = await res.json();
+                          if (data.success) {
+                            setSelectedJob({ ...selectedJob, notes: JSON.stringify(data.prepPack) });
+                          } else {
+                            alert('Failed to generate interview prep pack.');
+                          }
+                        }}
+                        className="h-7 text-[11px] bg-[#34d399]/10 hover:bg-[#34d399]/20 text-[#34d399] border border-[#34d399]/30"
+                      >
+                        Generate Interview Pack
+                      </Button>
+                    </div>
 
-                  <div>
-                    <span className="text-[10px] font-mono text-[#71717A] uppercase block">Job Source</span>
-                    <span className="text-xs text-[#818cf8]">
-                      {selectedJob.source}
-                    </span>
+                    {selectedJob.notes && selectedJob.notes.includes('"overallStrategy"') ? (
+                      (() => {
+                        try {
+                          const pack = JSON.parse(selectedJob.notes);
+                          return (
+                            <div className="space-y-3 bg-[#09090B] p-4 rounded-xl border border-[rgba(255,255,255,0.08)]">
+                              <div className="p-3 bg-[#6366f1]/10 rounded-lg border border-[#6366f1]/20">
+                                <span className="font-semibold text-[#FAFAFA] text-xs block mb-1">Company Interview Strategy:</span>
+                                <p className="text-[11px] text-[#A1A1AA]">{pack.overallStrategy}</p>
+                              </div>
+
+                              <div className="space-y-2">
+                                <span className="font-semibold text-[#FAFAFA] text-xs block">Technical Focus Areas:</span>
+                                <div className="flex flex-wrap gap-1.5">
+                                  {pack.technicalFocusAreas?.map((topic: string, i: number) => (
+                                    <span key={i} className="ag-badge-accent font-mono">{topic}</span>
+                                  ))}
+                                </div>
+                              </div>
+
+                              <div className="space-y-2 pt-2">
+                                <span className="font-semibold text-[#FAFAFA] text-xs block">Target Interview Questions:</span>
+                                {pack.questions?.slice(0, 5).map((q: any, i: number) => (
+                                  <div key={i} className="p-3 bg-[#111827] rounded-lg border border-[rgba(255,255,255,0.05)] space-y-1">
+                                    <div className="flex justify-between items-start">
+                                      <span className="font-semibold text-[#FAFAFA] text-xs">Q{i + 1}: {q.question}</span>
+                                      <span className="ag-badge-purple text-[9px] uppercase font-mono">{q.category}</span>
+                                    </div>
+                                    <p className="text-[10px] font-mono text-[#34d399]">Evaluating: {q.keyConcept}</p>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          );
+                        } catch {
+                          return null;
+                        }
+                      })()
+                    ) : (
+                      <p className="text-[11px] text-[#71717A]">
+                        Click "Generate Interview Pack" to create role-specific technical, coding/DSA, system design, and behavioral questions tailored for {selectedJob.company}.
+                      </p>
+                    )}
                   </div>
                 </div>
 
-                <div className="border-t border-[rgba(255,255,255,0.08)] pt-4 space-y-2">
-                  <a href={selectedJob.jobUrl} target="_blank" rel="noreferrer" className="block">
-                    <Button className="w-full h-8 text-xs bg-[#6366f1] hover:bg-[#4f46e5] text-white">
-                      Apply via Source <ExternalLink className="w-3.5 h-3.5 ml-1.5" />
-                    </Button>
-                  </a>
+                {/* Right Column (1 Col Sticky Panel): Scores & Quick Actions */}
+                <div className="p-6 space-y-4 bg-[#18181B]/50">
+                  <div className="space-y-3">
+                    <div>
+                      <span className="text-[10px] font-mono text-[#71717A] uppercase block">Overall Match</span>
+                      <span className="text-xl font-bold text-[#34d399]">
+                        {selectedJob.overallScore || 90}%
+                      </span>
+                    </div>
 
-                  <Button
-                    onClick={() => processJob(selectedJob.id)}
-                    variant="outline"
-                    className="w-full h-8 text-xs bg-[#111827] text-[#FAFAFA] border-[rgba(255,255,255,0.08)]"
-                  >
-                    Generate Customized Resume
-                  </Button>
+                    <div>
+                      <span className="text-[10px] font-mono text-[#71717A] uppercase block">Salary Compensation</span>
+                      <span className="text-sm font-semibold text-[#FAFAFA] font-mono">
+                        {selectedJob.salaryDisplay || 'Not Specified'}
+                      </span>
+                    </div>
+
+                    {/* Discovered Decision-Maker Section */}
+                    <div className="pt-3 border-t border-[rgba(255,255,255,0.08)] space-y-1">
+                      <span className="text-[10px] font-mono text-[#71717A] uppercase block">Decision Maker Found</span>
+                      <p className="text-xs font-semibold text-[#FAFAFA]">
+                        {selectedJob.hrName || 'Hiring Team'}
+                      </p>
+                      <p className="text-[11px] text-[#A1A1AA]">
+                        {selectedJob.hrTitle || 'HR / Talent Acquisition'}
+                      </p>
+                      {selectedJob.contactSource && (
+                        <Badge className="bg-[#6366f1]/10 text-[#818cf8] text-[9px] font-mono border-none mt-1">
+                          via {selectedJob.contactSource} ({selectedJob.contactConfidence || 'medium'})
+                        </Badge>
+                      )}
+                    </div>
+
+                    <div>
+                      <span className="text-[10px] font-mono text-[#71717A] uppercase block">Job Source</span>
+                      <span className="text-xs text-[#818cf8]">
+                        {selectedJob.source}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="border-t border-[rgba(255,255,255,0.08)] pt-4 space-y-2">
+                    <a href={selectedJob.jobUrl} target="_blank" rel="noreferrer" className="block">
+                      <Button className="w-full h-8 text-xs bg-[#6366f1] hover:bg-[#4f46e5] text-white flex items-center justify-center gap-1.5">
+                        <span>Open Original Job Posting</span>
+                        <ExternalLink className="w-3.5 h-3.5" />
+                      </Button>
+                    </a>
+
+                    <Button
+                      onClick={() => processJob(selectedJob.id)}
+                      variant="outline"
+                      className="w-full h-8 text-xs bg-[#111827] text-[#FAFAFA] border-[rgba(255,255,255,0.08)]"
+                    >
+                      Generate Customized Resume
+                    </Button>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
+        </Portal>
       )}
     </div>
   );

@@ -11,10 +11,27 @@ import { runCVPipeline } from '@/lib/cv/pipeline';
 import { runOutreachPipeline } from '@/lib/outreach/pipeline';
 import prisma from '@/lib/db';
 
+export async function GET(request: NextRequest) {
+  const { searchParams } = new URL(request.url);
+  const pipeline = searchParams.get('pipeline') || 'scrape';
+  return handlePipelineRun(pipeline, null);
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json().catch(() => ({}));
-    const { pipeline, jobId } = body;
+    const { searchParams } = new URL(request.url);
+    const pipeline = body.pipeline || searchParams.get('pipeline');
+    const jobId = body.jobId;
+    return handlePipelineRun(pipeline, jobId);
+  } catch (error) {
+    console.error('[API] Pipeline run error:', error);
+    return NextResponse.json({ error: 'Failed to start pipeline' }, { status: 500 });
+  }
+}
+
+async function handlePipelineRun(pipeline: string | null, jobId?: number | null) {
+  try {
 
     // Run specific job CV + Outreach pipeline
     if (pipeline === 'job' && jobId) {
