@@ -36,7 +36,7 @@ export function Topbar() {
             <input
               type="text"
               readOnly
-              placeholder="Search jobs, companies, skills or ask AntiGravity..."
+              placeholder="Search jobs, companies, skills or ask CareerFlow..."
               className="w-full bg-[#18181B] border border-[rgba(255,255,255,0.08)] rounded-lg pl-9 pr-12 py-1.5 text-xs text-[#FAFAFA] placeholder-[#71717A] cursor-pointer group-hover:border-[#6366f1]/40 transition-colors"
             />
             <div className="absolute right-2.5 top-1/2 -translate-y-1/2 flex items-center gap-1 text-[10px] font-mono text-[#71717A] bg-[#09090B] px-1.5 py-0.5 rounded border border-[rgba(255,255,255,0.08)]">

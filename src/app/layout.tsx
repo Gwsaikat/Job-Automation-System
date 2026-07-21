@@ -7,7 +7,7 @@ import { Topbar } from '@/components/topbar';
 const inter = Inter({ subsets: ['latin'], weight: ['300', '400', '500', '600', '700'] });
 
 export const metadata: Metadata = {
-  title: 'AntiGravity — Career Operating System',
+  title: 'CareerFlow — Autonomous AI Career Operating System',
   description: 'Autonomous AI Career Operating System for Software Engineers',
 };
 
