@@ -1,0 +1,134 @@
+\documentclass[10pt,a4paper]{article}
+
+% ============ PACKAGES ============
+\usepackage{fontspec}
+\usepackage[top=0.22in,bottom=0.22in,left=0.55in,right=0.55in]{geometry}
+\usepackage{titlesec}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{parskip}
+
+% ============ FONT ============
+\setmainfont{Carlito}
+
+% ============ COLORS ============
+\definecolor{headcol}{RGB}{25,42,68}
+\definecolor{linkcol}{RGB}{20,60,110}
+
+% ============ HYPERLINKS ============
+\hypersetup{
+    colorlinks=true,
+    linkcolor=linkcol,
+    urlcolor=linkcol,
+    pdftitle={Saikat Maji - Resume - Software Engineer / MERN Stack Developer},
+    pdfauthor={Saikat Maji}
+}
+
+% ============ SECTION STYLE (clean title + rule below, no overlap) ============
+\titleformat{\section}
+  {\normalfont\Large\bfseries\color{headcol}}
+  {}{0em}{}
+  [{\vspace{1pt}\color{headcol}\titlerule[0.8pt]}]
+\titlespacing*{\section}{0pt}{6pt}{3pt}
+
+% ============ LIST STYLE (comfortable, not cramped) ============
+\setlist[itemize]{leftmargin=15pt, itemsep=0.6pt, topsep=0.6pt, parsep=0pt, partopsep=0pt}
+
+% ============ MISC ============
+\pagestyle{empty}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{1pt}
+
+\newcommand{\heading}[2]{\noindent\textbf{#1}\hfill\textit{\small #2}\par}
+\newcommand{\subheading}[1]{\noindent\textit{\small #1}\par\vspace{2pt}}
+
+\begin{document}
+\raggedright
+
+% ================= HEADER =================
+\begin{center}
+    {\huge\bfseries SAIKAT MAJI}\\[2pt]
+    {\normalsize Full-Stack Software Engineer --- MERN Stack}\\[3pt]
+    \small
+    +91-8509233422 \textbar\ \href{mailto:saikatmaji200@gmail.com}{saikatmaji200@gmail.com} \textbar\ Kolkata, India\\[1pt]
+    \href{https://frontend-snowy-eight-57.vercel.app}{frontend-snowy-eight-57.vercel.app} \textbar\
+    \href{https://github.com/GwSaikat}{github.com/GwSaikat} \textbar\
+    \href{https://www.linkedin.com/in/saikat-maji-sde}{linkedin.com/in/saikat-maji-sde}
+\end{center}
+
+% ================= SUMMARY =================
+\section*{Summary}
+Computer Science graduate and full-stack MERN developer with freelance experience shipping production web apps end-to-end. Skilled in real-time systems, REST APIs, and LLM-integrated features (LangChain, RAG). Seeking a Software Engineer / MERN Stack Developer role at a startup.
+
+% ================= SKILLS =================
+\section*{Technical Skills}
+\begin{itemize}
+    \item \textbf{Languages:} JavaScript (ES6+), TypeScript, C++, SQL, HTML5, CSS3
+    \item \textbf{Frontend:} React.js, Next.js
+    \item \textbf{Backend:} Node.js, Express.js, REST API Design, WebSocket
+    \item \textbf{AI / LLM:} LangChain, Retrieval-Augmented Generation (RAG), LLM APIs
+    \item \textbf{Databases:} MongoDB, Redis, MySQL
+    \item \textbf{Auth \& Security:} JWT, bcrypt, Role-Based Access Control (RBAC)
+    \item \textbf{Testing:} Vitest, Jest
+    \item \textbf{DevOps \& Tools:} Git, GitHub, Docker, CI/CD (Vercel, Render), Postman
+    \item \textbf{Core CS:} Data Structures \& Algorithms, OOP, DBMS, Operating Systems, System Design
+\end{itemize}
+
+% ================= EXPERIENCE =================
+\section*{Experience}
+
+\heading{Freelance Full-Stack Developer}{2025 -- Present}
+\subheading{Self-Employed, Remote}
+\begin{itemize}
+    \item Built and deployed full-stack management systems for 2 clients (a gym and a diagnostic center), from requirements to production launch.
+    \item Replaced manual scheduling and record-keeping with role-based web apps for non-technical staff.
+    \item Owned the entire lifecycle solo --- architecture, development, testing, deployment, and client communication.
+\end{itemize}
+
+\heading{Additional Experience}{}
+\begin{itemize}
+    \item \textbf{Thiranex} (Virtual Internship): built 3 full-stack apps --- a task manager, an e-commerce store, and a blog platform with threaded comments.
+    \item \textbf{Forage} (Startup Simulation): shipped frontend fixes and new backend features from real user feedback for a simulated product team.
+\end{itemize}
+
+% ================= PROJECTS =================
+\section*{Projects}
+
+\heading{FlowForge --- Real-Time Critical Path Orchestration Engine}{}
+\subheading{\href{https://github.com/GwSaikat/FlowForge}{GitHub} \textbar\ \href{https://client-one-bay-37.vercel.app/}{Live Demo}}
+\begin{itemize}
+    \item Engineered a real-time CPM engine from scratch --- Kahn's topological sort, DFS cycle detection, and forward/backward-pass scheduling --- to auto-calculate the critical path on any task graph.
+    \item Integrated LangChain and an LLM API for AI features: an automated standup-brief generator and a semantic dependency detector.
+    \item Built a real-time sync layer (Socket.io, Redis) broadcasting graph updates within milliseconds; deployed on Vercel/Render with MongoDB Atlas.
+\end{itemize}
+
+\heading{Banking System --- Full-Stack Banking Application}{}
+\subheading{\href{https://github.com/GwSaikat/Banking-System}{GitHub} \textbar\ \href{https://banking-system-sepia.vercel.app}{Live Demo}}
+\begin{itemize}
+    \item Built a full-stack banking app (React.js frontend, Express.js/Node.js REST API) for accounts and transactions.
+    \item Split the codebase into independently deployable frontend/backend modules with isolated build pipelines.
+    \item Deployed a unified CI/CD pipeline --- Render (backend), Vercel (frontend) --- from a single repo.
+\end{itemize}
+
+\heading{CropAI --- AI-Powered Crop Disease Detection Platform}{}
+\subheading{\href{https://github.com/GwSaikat/CropAI}{GitHub} \textbar\ \href{https://cropai-app.vercel.app}{Live Demo}}
+\begin{itemize}
+    \item Built a platform that detects crop diseases from leaf photos via an in-browser TensorFlow.js model, paired with an LLM API for treatment recommendations.
+    \item Designed a federated-learning-style architecture to aggregate model updates across users without centralizing raw data.
+    \item Added Supabase (PostgreSQL) auth, Socket.io real-time updates, and Leaflet-based disease mapping.
+\end{itemize}
+
+\heading{TrackChat --- Real-Time Chat \& Device-Tracking App (In Progress)}{}
+\subheading{MERN, Socket.io, WebSocket}
+\begin{itemize}
+    \item Building a real-time chat app with live device tracking (Geolocation API, Leaflet) and JWT refresh-token auth on Node.js/Express.
+\end{itemize}
+
+% ================= EDUCATION & CERTIFICATIONS =================
+\enlargethispage{2\baselineskip}
+\section*{Education \& Certifications}
+\heading{JIS University, Kolkata --- B.Tech in Computer Science and Engineering}{Aug 2022 -- May 2026}
+Cisco CCNA --- Collaboration, Simplilearn (2024) \textbar\ Generative AI for Developers (Advanced), Google Skills --- In Progress
+
+\end{document}

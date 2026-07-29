@@ -40,14 +40,18 @@ export const jobProcessingSemaphore = new Semaphore(2);
 // ---- Deduplication ----
 
 async function getExistingSourceIds(): Promise<Set<string>> {
-  const jobIds = await prisma.job.findMany({ select: { sourceId: true } });
+  const jobIds = await prisma.job.findMany({ select: { sourceId: true, jobUrl: true, company: true, jobTitle: true } });
   const challengeIds = await prisma.sdeChallenge.findMany({ select: { sourceId: true } });
   const rejectedIds = await prisma.rejectedJob.findMany({ select: { sourceId: true } });
 
   const set = new Set<string>();
-  for (const j of jobIds) set.add(j.sourceId);
-  for (const c of challengeIds) set.add(c.sourceId);
-  for (const r of rejectedIds) set.add(r.sourceId);
+  for (const j of jobIds) {
+    if (j.sourceId) set.add(j.sourceId);
+    if (j.jobUrl && j.jobUrl.length > 5) set.add(j.jobUrl.trim().toLowerCase());
+    if (j.company && j.jobTitle) set.add(`hash_${j.company.trim().toLowerCase()}_${j.jobTitle.trim().toLowerCase()}`);
+  }
+  for (const c of challengeIds) if (c.sourceId) set.add(c.sourceId);
+  for (const r of rejectedIds) if (r.sourceId) set.add(r.sourceId);
   return set;
 }
 
@@ -205,9 +209,12 @@ export async function runDailyScrapePipeline(): Promise<PipelineStats> {
 
   // Step 4: Process jobs — multi-gate filter → score → threshold
   for (const rawJob of allRawJobs) {
+    const jobUrlKey = rawJob.url ? rawJob.url.trim().toLowerCase() : '';
+    const hashKey = rawJob.company && rawJob.title ? `hash_${rawJob.company.trim().toLowerCase()}_${rawJob.title.trim().toLowerCase()}` : '';
+
     // Check for hiring challenge pattern
     if (isHiringChallenge(rawJob)) {
-      if (existingIds.has(rawJob.sourceId)) {
+      if (existingIds.has(rawJob.sourceId) || (jobUrlKey && existingIds.has(jobUrlKey)) || (hashKey && existingIds.has(hashKey))) {
         stats.duplicatesSkipped++;
         continue;
       }
@@ -228,23 +235,28 @@ export async function runDailyScrapePipeline(): Promise<PipelineStats> {
         });
         stats.challengesInserted++;
         existingIds.add(rawJob.sourceId);
+        if (jobUrlKey) existingIds.add(jobUrlKey);
+        if (hashKey) existingIds.add(hashKey);
       } catch {
         stats.duplicatesSkipped++;
       }
       continue;
     }
 
-    // Dedup check
-    if (existingIds.has(rawJob.sourceId)) {
+    // Dedup check across sourceId, URL, and company_title hash
+    if (existingIds.has(rawJob.sourceId) || (jobUrlKey && existingIds.has(jobUrlKey)) || (hashKey && existingIds.has(hashKey))) {
       stats.duplicatesSkipped++;
       continue;
     }
 
     existingIds.add(rawJob.sourceId);
+    if (jobUrlKey) existingIds.add(jobUrlKey);
+    if (hashKey) existingIds.add(hashKey);
+
     await processAndInsertJob(rawJob, stats);
   }
 
-  console.log(`[Pipeline] Complete! Fetched: ${stats.totalFetched}, Qualified: ${stats.jobsQualified}, Below Threshold: ${stats.jobsBelowThreshold}, Rejected: ${stats.jobsRejected}, Challenges: ${stats.challengesInserted}`);
+  console.log(`[Pipeline] Complete! Fetched: ${stats.totalFetched}, Qualified: ${stats.jobsQualified}, Below Threshold: ${stats.jobsBelowThreshold}, Rejected: ${stats.jobsRejected}, Challenges: ${stats.challengesInserted}, Duplicates Skipped: ${stats.duplicatesSkipped}`);
   console.log(`[Pipeline] Filter breakdown:`, JSON.stringify(stats.filterBreakdown));
 
   // Update last scrape run timestamp
@@ -296,8 +308,7 @@ export async function processAndInsertJob(rawJob: RawJob, stats?: PipelineStats)
   const matchScores = await computeMatchScores(rawJob, locFilter, false);
   const matchTier = classifyTier(matchScores.overallScore);
 
-  // Insert the job into the database (ALL tiers get stored, tier determines further processing)
-  let insertedJobId: number | null = null;
+  // Insert the job into the database (ALL tiers stored, tailoring happens ONLY when user clicks)
   try {
     const inserted = await prisma.job.create({
       data: {
@@ -315,17 +326,17 @@ export async function processAndInsertJob(rawJob: RawJob, stats?: PipelineStats)
         overallScore: matchScores.overallScore,
         matchScores: JSON.stringify(matchScores),
         matchTier,
+        applicationStatus: 'Pending', // Stored as Pending — user clicks Tailor to generate CV
         createdAt: new Date().toISOString(),
       },
     });
 
-    insertedJobId = inserted.id;
     if (stats) {
       stats.jobsPassed++;
       if (matchTier === 'qualified') stats.jobsQualified++;
       else if (matchTier === 'below_threshold') stats.jobsBelowThreshold++;
     }
-    console.log(`[Pipeline] Job INSERTED: ${rawJob.title} at ${rawJob.company} (id=${insertedJobId}, score=${matchScores.overallScore}, tier=${matchTier})`);
+    console.log(`[Pipeline] Job STORED: ${rawJob.title} at ${rawJob.company} (id=${inserted.id}, score=${matchScores.overallScore}, tier=${matchTier}) — Ready for user click to tailor`);
   } catch (err) {
     if (String(err).includes('Unique constraint')) {
       if (stats) stats.duplicatesSkipped++;
@@ -333,41 +344,5 @@ export async function processAndInsertJob(rawJob: RawJob, stats?: PipelineStats)
       console.error('[Pipeline] Job insert error:', err);
       if (stats) stats.errors.push(`Job insert error: ${rawJob.title} - ${err}`);
     }
-    return;
-  }
-
-  // ---- Only trigger CV+Outreach for QUALIFIED jobs (≥85%) ----
-  if (insertedJobId && matchTier === 'qualified') {
-    const jobId = insertedJobId;
-    setTimeout(async () => {
-      await jobProcessingSemaphore.acquire();
-      try {
-        console.log(`[Pipeline] Auto-triggering CV and Outreach for Job ${jobId} (score: ${matchScores.overallScore})`);
-        await runCVPipeline(jobId);
-        await runOutreachPipeline(jobId);
-        await prisma.job.update({
-          where: { id: jobId },
-          data: {
-            applicationStatus: 'Draft Ready',
-            processingError: null,
-            processedAt: new Date().toISOString(),
-          },
-        });
-      } catch (error) {
-        const message = error instanceof Error ? error.message : String(error);
-        console.error(`[Pipeline] Auto-processing failed for Job ${jobId}:`, error);
-        await prisma.job.update({
-          where: { id: jobId },
-          data: {
-            processingError: message.slice(0, 500),
-            processedAt: new Date().toISOString(),
-          },
-        }).catch(() => {}); // don't let a logging failure mask the original error
-      } finally {
-        jobProcessingSemaphore.release();
-      }
-    }, 0);
-  } else if (insertedJobId && matchTier === 'below_threshold') {
-    console.log(`[Pipeline] Job ${insertedJobId} scored ${matchScores.overallScore} — below threshold, stored for manual review`);
   }
 }

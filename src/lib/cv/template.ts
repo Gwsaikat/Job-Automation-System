@@ -1,7 +1,7 @@
 // ============================================
-// Master CV HTML/CSS Template — Section 5.2
-// ATS-clean, single-page A4 design
-// AI-editable regions marked with HTML comments
+// Master CV HTML/CSS & LaTeX Template — Section 5.2
+// ATS-clean, single-page design matching Saikat_Maji_Resume.tex
+// AI-editable regions marked with comments
 // ============================================
 
 export const MASTER_CV_HTML = `<!DOCTYPE html>
@@ -19,7 +19,7 @@ export const MASTER_CV_HTML = `<!DOCTYPE html>
     font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
     font-size: 10px;
     line-height: 1.35;
-    color: #1a1a1a;
+    color: #192a44;
     background: white;
   }
 
@@ -27,15 +27,16 @@ export const MASTER_CV_HTML = `<!DOCTYPE html>
     width: 210mm;
     min-height: 297mm;
     max-height: 297mm;
-    padding: 12mm 14mm;
+    padding: 10mm 14mm;
     overflow: hidden;
   }
 
   /* Header */
-  .header { text-align: center; margin-bottom: 6px; border-bottom: 1.5px solid #1a1a1a; padding-bottom: 6px; }
-  .header h1 { font-size: 18px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 3px; }
-  .header .contact { font-size: 9px; color: #333; }
-  .header .contact a { color: #333; text-decoration: none; }
+  .header { text-align: center; margin-bottom: 6px; border-bottom: 1.5px solid #192a44; padding-bottom: 6px; }
+  .header h1 { font-size: 18px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: #192a44; margin-bottom: 3px; }
+  .header .subtitle { font-size: 10.5px; font-weight: 500; color: #192a44; margin-bottom: 3px; }
+  .header .contact { font-size: 9px; color: #143c6e; }
+  .header .contact a { color: #143c6e; text-decoration: none; }
 
   /* Section */
   .section { margin-bottom: 5px; }
@@ -43,38 +44,41 @@ export const MASTER_CV_HTML = `<!DOCTYPE html>
     font-size: 11px;
     font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 1px;
-    border-bottom: 1px solid #ccc;
+    letter-spacing: 0.5px;
+    border-bottom: 1px solid #192a44;
     padding-bottom: 2px;
     margin-bottom: 4px;
-    color: #1a1a1a;
+    color: #192a44;
   }
 
   /* Summary */
-  .summary { font-size: 9.5px; color: #333; }
+  .summary { font-size: 9.5px; color: #222; }
 
   /* Skills */
   .skills-grid { font-size: 9.5px; }
-  .skill-row { display: flex; margin-bottom: 1px; }
-  .skill-label { font-weight: 600; min-width: 130px; color: #1a1a1a; }
-  .skill-value { color: #333; }
+  .skill-row { display: flex; margin-bottom: 1.5px; }
+  .skill-label { font-weight: 700; min-width: 130px; color: #192a44; }
+  .skill-value { color: #222; }
 
   /* Experience / Projects */
   .entry { margin-bottom: 4px; }
   .entry-header { display: flex; justify-content: space-between; align-items: baseline; }
-  .entry-title { font-weight: 600; font-size: 10px; }
+  .entry-title { font-weight: 700; font-size: 10px; color: #192a44; }
   .entry-meta { font-size: 9px; color: #555; font-style: italic; }
-  .entry-subtitle { font-size: 9px; color: #555; font-style: italic; margin-bottom: 1px; }
-  .entry ul { padding-left: 14px; font-size: 9.5px; color: #333; }
+  .entry-subtitle { font-size: 9px; color: #143c6e; font-style: italic; margin-bottom: 1px; }
+  .entry ul { padding-left: 14px; font-size: 9.5px; color: #222; }
   .entry li { margin-bottom: 1px; }
 
   /* Education & Certs */
-  .edu-line { font-size: 9.5px; }
-  .edu-line strong { font-weight: 600; }
+  .edu-line { font-size: 9.5px; color: #222; }
+  .edu-line strong { font-weight: 700; color: #192a44; }
 
   /* Links */
-  .project-links { font-size: 8.5px; color: #0066cc; }
-  .project-links a { color: #0066cc; text-decoration: none; }
+  .project-links { font-size: 8.5px; color: #143c6e; }
+  .project-links a { color: #143c6e; text-decoration: none; font-weight: 500; }
+  
+  /* Hidden ATS Layer */
+  .ats-keywords-hidden { display: none; visibility: hidden; opacity: 0; font-size: 0px; height: 0px; }
 </style>
 </head>
 <body>
@@ -82,12 +86,13 @@ export const MASTER_CV_HTML = `<!DOCTYPE html>
 
   <div class="header">
     <h1>SAIKAT MAJI</h1>
+    <div class="subtitle">Full-Stack Software Engineer — MERN Stack</div>
     <div class="contact">
       +91-8509233422 &nbsp;|&nbsp;
-      <a href="mailto:Saikatmaji200@gmail.com">Saikatmaji200@gmail.com</a> &nbsp;|&nbsp;
-      <a href="https://linkedin.com/in/saikat-maji-">linkedin.com/in/saikat-maji-</a> &nbsp;|&nbsp;
+      <a href="mailto:saikatmaji200@gmail.com">saikatmaji200@gmail.com</a> &nbsp;|&nbsp; Kolkata, India<br>
+      <a href="https://frontend-snowy-eight-57.vercel.app">frontend-snowy-eight-57.vercel.app</a> &nbsp;|&nbsp;
       <a href="https://github.com/GwSaikat">github.com/GwSaikat</a> &nbsp;|&nbsp;
-      <a href="https://leetcode.com/u/Alpha7679">leetcode.com/u/Alpha7679</a>
+      <a href="https://www.linkedin.com/in/saikat-maji-sde">linkedin.com/in/saikat-maji-sde</a>
     </div>
   </div>
 
@@ -95,10 +100,7 @@ export const MASTER_CV_HTML = `<!DOCTYPE html>
   <div class="section">
     <div class="section-title">Summary</div>
     <p class="summary">
-      Computer Science graduate and full-stack developer skilled in building production-style MERN
-      applications, real-time systems, and AI-integrated features with LangChain and RAG. Proficient
-      in React.js, Node.js/Express.js, REST API design, and core CS fundamentals (DSA, OOP, DBMS,
-      System Design). Seeking a Software Engineer / Full-Stack Developer role.
+      Computer Science graduate and full-stack MERN developer with freelance experience shipping production web apps end-to-end. Skilled in real-time systems, REST APIs, and LLM-integrated features (LangChain, RAG). Seeking a Software Engineer / MERN Stack Developer role at a startup.
     </p>
   </div>
   <!-- AI_EDITABLE_SUMMARY_END -->
@@ -109,27 +111,39 @@ export const MASTER_CV_HTML = `<!DOCTYPE html>
     <div class="skills-grid">
       <div class="skill-row">
         <span class="skill-label">Languages:</span>
-        <span class="skill-value">JavaScript (ES6+), TypeScript, C++, SQL, HTML, CSS</span>
+        <span class="skill-value">JavaScript (ES6+), TypeScript, C++, SQL, HTML5, CSS3</span>
       </div>
       <div class="skill-row">
-        <span class="skill-label">Frontend/Backend:</span>
-        <span class="skill-value">React.js, Next.js | Node.js, Express.js, REST APIs, WebSocket</span>
+        <span class="skill-label">Frontend:</span>
+        <span class="skill-value">React.js, Next.js</span>
       </div>
       <div class="skill-row">
-        <span class="skill-label">AI/LLM:</span>
-        <span class="skill-value">LangChain, RAG, AI Integration (OpenAI API)</span>
+        <span class="skill-label">Backend:</span>
+        <span class="skill-value">Node.js, Express.js, REST API Design, WebSocket</span>
       </div>
       <div class="skill-row">
-        <span class="skill-label">Databases &amp; Infra/Auth:</span>
-        <span class="skill-value">MongoDB, Redis, Docker (Basics) | JWT, bcrypt, RBAC</span>
+        <span class="skill-label">AI / LLM:</span>
+        <span class="skill-value">LangChain, Retrieval-Augmented Generation (RAG), LLM APIs</span>
       </div>
       <div class="skill-row">
-        <span class="skill-label">Dev Tools &amp; Deployment:</span>
-        <span class="skill-value">Git, GitHub, Vercel, Netlify, Render</span>
+        <span class="skill-label">Databases:</span>
+        <span class="skill-value">MongoDB, Redis, MySQL</span>
+      </div>
+      <div class="skill-row">
+        <span class="skill-label">Auth &amp; Security:</span>
+        <span class="skill-value">JWT, bcrypt, Role-Based Access Control (RBAC)</span>
+      </div>
+      <div class="skill-row">
+        <span class="skill-label">Testing:</span>
+        <span class="skill-value">Vitest, Jest</span>
+      </div>
+      <div class="skill-row">
+        <span class="skill-label">DevOps &amp; Tools:</span>
+        <span class="skill-value">Git, GitHub, Docker, CI/CD (Vercel, Render), Postman</span>
       </div>
       <div class="skill-row">
         <span class="skill-label">Core CS:</span>
-        <span class="skill-value">Data Structures &amp; Algorithms, OOP, DBMS, System Design, Operating Systems</span>
+        <span class="skill-value">Data Structures &amp; Algorithms, OOP, DBMS, Operating Systems, System Design</span>
       </div>
     </div>
   </div>
@@ -141,34 +155,22 @@ export const MASTER_CV_HTML = `<!DOCTYPE html>
     <div class="entry">
       <div class="entry-header">
         <span class="entry-title">Freelance Full-Stack Developer</span>
-        <span class="entry-meta">2025–Present | Self-Employed, Remote</span>
+        <span class="entry-meta">2025 – Present | Self-Employed, Remote</span>
       </div>
       <ul>
-        <li>Designed and deployed full-stack management systems for two clients (a gym and a diagnostic center), from initial requirements through production launch.</li>
-        <li>Built responsive, role-based web apps that digitized scheduling, client records, and daily operations, replacing manual processes.</li>
-        <li>Owned the full development lifecycle — requirements, architecture, development, testing, and deployment — while handling client communication directly.</li>
+        <li>Built and deployed full-stack management systems for 2 clients (a gym and a diagnostic center), from requirements to production launch.</li>
+        <li>Replaced manual scheduling and record-keeping with role-based web apps for non-technical staff.</li>
+        <li>Owned the entire lifecycle solo — architecture, development, testing, deployment, and client communication.</li>
       </ul>
     </div>
 
     <div class="entry">
       <div class="entry-header">
-        <span class="entry-title">Virtual Internship — Thiranex (Full-Stack Development)</span>
+        <span class="entry-title">Additional Experience</span>
       </div>
       <ul>
-        <li>Built a Task Management Application enabling task creation, assignment, and status tracking.</li>
-        <li>Developed an E-Commerce Web Application with product browsing, cart, and order management.</li>
-        <li>Created a Blog Platform with Comments, including content publishing and threaded discussions.</li>
-      </ul>
-    </div>
-
-    <div class="entry">
-      <div class="entry-header">
-        <span class="entry-title">Software Engineering Job Simulation — Forage</span>
-      </div>
-      <ul>
-        <li>Completed a virtual job simulation performing realistic software engineering tasks for a Y Combinator–style startup application.</li>
-        <li>Implemented frontend improvements from user feedback and shipped new backend features.</li>
-        <li>Analyzed product/feature releases to evaluate user impact and guide development decisions.</li>
+        <li><strong>Thiranex (Virtual Internship):</strong> Built 3 full-stack apps — a task manager, an e-commerce store, and a blog platform with threaded comments.</li>
+        <li><strong>Forage (Startup Simulation):</strong> Shipped frontend fixes and new backend features from real user feedback for a simulated product team.</li>
       </ul>
     </div>
   </div>
@@ -180,51 +182,60 @@ export const MASTER_CV_HTML = `<!DOCTYPE html>
     <div class="entry">
       <div class="entry-header">
         <span class="entry-title">FlowForge — Real-Time Critical Path Orchestration Engine</span>
-        <span class="project-links"><a href="#">GitHub</a> | <a href="#">Live Demo</a></span>
+        <span class="project-links"><a href="https://github.com/GwSaikat/FlowForge" target="_blank">GitHub</a> | <a href="https://client-one-bay-37.vercel.app/" target="_blank">Live Demo</a></span>
       </div>
       <ul>
-        <li>Engineered a real-time CPM engine modeling projects as dependency graphs, implementing topological sort, DFS cycle detection, and CPM forward/backward-pass algorithms from scratch.</li>
-        <li>Integrated LangChain and OpenAI API for AI-driven features: automated standup-brief generator and semantic dependency detector for hidden task relationships.</li>
-        <li>Built a real-time layer with Socket.io/WebSocket, Express.js, Redis broadcasting graph updates within milliseconds; deployed on Render/Vercel with MongoDB Atlas.</li>
-      </ul>
-    </div>
-
-    <div class="entry">
-      <div class="entry-header">
-        <span class="entry-title">TrackChat — Real-Time Chat &amp; Device Tracking App (In Progress)</span>
-        <span class="entry-meta">MERN, Socket.io, WebSocket</span>
-      </div>
-      <ul>
-        <li>Building a real-time chat app with live device-location tracking via Socket.io, WebSocket, and HTML5 Geolocation API, rendered on an interactive Leaflet.js map.</li>
-        <li>Architecting an event-driven Node.js/Express.js backend with MongoDB for message persistence, read receipts, typing indicators, and group chat.</li>
-        <li>Implementing JWT refresh-token rotation with a mobile-first React.js frontend.</li>
+        <li>Engineered a real-time CPM engine from scratch — Kahn's topological sort, DFS cycle detection, and forward/backward-pass scheduling — to auto-calculate the critical path on any task graph.</li>
+        <li>Integrated LangChain and an LLM API for AI features: an automated standup-brief generator and a semantic dependency detector.</li>
+        <li>Built a real-time sync layer (Socket.io, Redis) broadcasting graph updates within milliseconds; deployed on Vercel/Render with MongoDB Atlas.</li>
       </ul>
     </div>
 
     <div class="entry">
       <div class="entry-header">
         <span class="entry-title">Banking System — Full-Stack Banking Application</span>
-        <span class="project-links"><a href="#">GitHub</a> | <a href="#">Live Demo</a></span>
+        <span class="project-links"><a href="https://github.com/GwSaikat/Banking-System" target="_blank">GitHub</a> | <a href="https://banking-system-sepia.vercel.app" target="_blank">Live Demo</a></span>
       </div>
       <ul>
-        <li>Engineered a full-stack banking application (React.js frontend, RESTful Express.js/Node.js API) handling core banking operations such as accounts and transactions.</li>
-        <li>Structured the codebase into independently deployable frontend/backend modules.</li>
-        <li>Deployed a unified pipeline: backend on Render, frontend on Vercel.</li>
+        <li>Built a full-stack banking app (React.js frontend, Express.js/Node.js REST API) for accounts and transactions.</li>
+        <li>Split the codebase into independently deployable frontend/backend modules with isolated build pipelines.</li>
+        <li>Deployed a unified CI/CD pipeline — Render (backend), Vercel (frontend) — from a single repo.</li>
+      </ul>
+    </div>
+
+    <div class="entry">
+      <div class="entry-header">
+        <span class="entry-title">CropAI — AI-Powered Crop Disease Detection Platform</span>
+        <span class="project-links"><a href="https://github.com/GwSaikat/CropAI" target="_blank">GitHub</a> | <a href="https://cropai-app.vercel.app" target="_blank">Live Demo</a></span>
+      </div>
+      <ul>
+        <li>Built a platform that detects crop diseases from leaf photos via an in-browser TensorFlow.js model, paired with an LLM API for treatment recommendations.</li>
+        <li>Designed a federated-learning-style architecture to aggregate model updates across users without centralizing raw data.</li>
+        <li>Added Supabase (PostgreSQL) auth, Socket.io real-time updates, and Leaflet-based disease mapping.</li>
+      </ul>
+    </div>
+
+    <div class="entry">
+      <div class="entry-header">
+        <span class="entry-title">TrackChat — Real-Time Chat &amp; Device-Tracking App (In Progress)</span>
+        <span class="entry-meta">MERN, Socket.io, WebSocket</span>
+      </div>
+      <ul>
+        <li>Building a real-time chat app with live device tracking (Geolocation API, Leaflet) and JWT refresh-token auth on Node.js/Express.</li>
       </ul>
     </div>
   </div>
   <!-- AI_EDITABLE_PROJECTS_END -->
 
   <div class="section">
-    <div class="section-title">Education</div>
-    <p class="edu-line"><strong>JIS University, Kolkata, India</strong> — B.Tech Computer Science and Engineering — Aug 2022 – May 2026</p>
+    <div class="section-title">Education &amp; Certifications</div>
+    <p class="edu-line"><strong>JIS University, Kolkata</strong> — B.Tech in Computer Science and Engineering — Aug 2022 – May 2026</p>
+    <p class="edu-line">Cisco CCNA — Collaboration, Simplilearn (2024) &nbsp;|&nbsp; Generative AI for Developers (Advanced), Google Skills — In Progress</p>
   </div>
 
-  <div class="section">
-    <div class="section-title">Certifications</div>
-    <p class="edu-line">Cisco Certified Network Associate — Collaboration (CCNA-C), Simplilearn — Jul 2024</p>
-    <p class="edu-line">Generative AI for Developers (Advanced), Google Skills — In Progress</p>
-  </div>
+  <!-- AI_EDITABLE_ATS_KEYWORDS_START -->
+  <div class="ats-keywords-hidden"></div>
+  <!-- AI_EDITABLE_ATS_KEYWORDS_END -->
 
 </div>
 </body>
@@ -232,195 +243,205 @@ export const MASTER_CV_HTML = `<!DOCTYPE html>
 
 // Master skills list for diff-checking (Section 5.4)
 export const MASTER_SKILLS = [
-  'javascript', 'typescript', 'c++', 'sql', 'html', 'css',
+  'javascript', 'typescript', 'c++', 'sql', 'html', 'html5', 'css', 'css3',
   'react', 'react.js', 'next.js', 'nextjs', 'node.js', 'nodejs',
   'express', 'express.js', 'rest api', 'rest apis', 'websocket',
-  'langchain', 'rag', 'ai integration', 'openai api', 'openai',
-  'mongodb', 'redis', 'docker', 'jwt', 'bcrypt', 'rbac',
-  'git', 'github', 'vercel', 'netlify', 'render',
+  'langchain', 'rag', 'ai integration', 'openai api', 'openai', 'llm', 'llm apis',
+  'mongodb', 'redis', 'mysql', 'supabase', 'postgresql', 'docker', 'jwt', 'bcrypt', 'rbac',
+  'vitest', 'jest', 'git', 'github', 'vercel', 'netlify', 'render', 'postman',
   'data structures', 'algorithms', 'dsa', 'oop', 'dbms',
   'system design', 'operating systems',
-  'socket.io', 'mern', 'leaflet.js', 'geolocation',
+  'socket.io', 'mern', 'leaflet.js', 'geolocation', 'tensorflow.js',
   'es6', 'es6+',
 ];
 
 // Plain text version of the resume for AI context
 export const MASTER_RESUME_TEXT = `SAIKAT MAJI
-+91-8509233422 | Saikatmaji200@gmail.com | linkedin.com/in/saikat-maji- | github.com/GwSaikat | leetcode.com/u/Alpha7679
+Full-Stack Software Engineer --- MERN Stack
++91-8509233422 | saikatmaji200@gmail.com | Kolkata, India
+frontend-snowy-eight-57.vercel.app | github.com/GwSaikat | linkedin.com/in/saikat-maji-sde
 
 SUMMARY:
-Computer Science graduate and full-stack developer skilled in building production-style MERN applications, real-time systems, and AI-integrated features with LangChain and RAG. Proficient in React.js, Node.js/Express.js, REST API design, and core CS fundamentals (DSA, OOP, DBMS, System Design). Seeking a Software Engineer / Full-Stack Developer role.
+Computer Science graduate and full-stack MERN developer with freelance experience shipping production web apps end-to-end. Skilled in real-time systems, REST APIs, and LLM-integrated features (LangChain, RAG). Seeking a Software Engineer / MERN Stack Developer role at a startup.
 
 TECHNICAL SKILLS:
-Languages: JavaScript (ES6+), TypeScript, C++, SQL, HTML, CSS
-Frontend/Backend: React.js, Next.js | Node.js, Express.js, REST APIs, WebSocket
-AI/LLM: LangChain, RAG, AI Integration (OpenAI API)
-Databases & Infra/Auth: MongoDB, Redis, Docker (Basics) | JWT, bcrypt, RBAC
-Dev Tools & Deployment: Git, GitHub, Vercel, Netlify, Render
-Core CS: Data Structures & Algorithms, OOP, DBMS, System Design, Operating Systems
+Languages: JavaScript (ES6+), TypeScript, C++, SQL, HTML5, CSS3
+Frontend: React.js, Next.js
+Backend: Node.js, Express.js, REST API Design, WebSocket
+AI / LLM: LangChain, Retrieval-Augmented Generation (RAG), LLM APIs
+Databases: MongoDB, Redis, MySQL
+Auth & Security: JWT, bcrypt, Role-Based Access Control (RBAC)
+Testing: Vitest, Jest
+DevOps & Tools: Git, GitHub, Docker, CI/CD (Vercel, Render), Postman
+Core CS: Data Structures & Algorithms, OOP, DBMS, Operating Systems, System Design
 
 EXPERIENCE:
-Freelance Full-Stack Developer | 2025–Present | Self-Employed, Remote
-- Designed and deployed full-stack management systems for two clients (a gym and a diagnostic center).
-- Built responsive, role-based web apps that digitized scheduling, client records, and daily operations.
-- Owned the full development lifecycle — requirements, architecture, development, testing, deployment.
+Freelance Full-Stack Developer | 2025 -- Present | Self-Employed, Remote
+- Built and deployed full-stack management systems for 2 clients (a gym and a diagnostic center), from requirements to production launch.
+- Replaced manual scheduling and record-keeping with role-based web apps for non-technical staff.
+- Owned the entire lifecycle solo --- architecture, development, testing, deployment, and client communication.
 
-Virtual Internship — Thiranex (Full-Stack Development)
-- Built a Task Management Application enabling task creation, assignment, and status tracking.
-- Developed an E-Commerce Web Application with product browsing, cart, and order management.
-- Created a Blog Platform with Comments, including content publishing and threaded discussions.
-
-Software Engineering Job Simulation — Forage
-- Completed virtual job simulation for a Y Combinator–style startup application.
-- Implemented frontend improvements and shipped new backend features.
-- Analyzed product/feature releases to evaluate user impact.
+Additional Experience:
+- Thiranex (Virtual Internship): Built 3 full-stack apps --- a task manager, an e-commerce store, and a blog platform with threaded comments.
+- Forage (Startup Simulation): Shipped frontend fixes and new backend features from real user feedback for a simulated product team.
 
 PROJECTS:
-FlowForge — Real-Time Critical Path Orchestration Engine
-- Real-time CPM engine with topological sort, DFS cycle detection, CPM forward/backward-pass algorithms.
-- LangChain + OpenAI API for AI-driven standup-brief generator and semantic dependency detector.
-- Socket.io/WebSocket, Express.js, Redis real-time layer; deployed on Render/Vercel with MongoDB Atlas.
+FlowForge --- Real-Time Critical Path Orchestration Engine (GitHub | Live Demo)
+- Engineered a real-time CPM engine from scratch --- Kahn's topological sort, DFS cycle detection, and forward/backward-pass scheduling --- to auto-calculate the critical path on any task graph.
+- Integrated LangChain and an LLM API for AI features: an automated standup-brief generator and a semantic dependency detector.
+- Built a real-time sync layer (Socket.io, Redis) broadcasting graph updates within milliseconds; deployed on Vercel/Render with MongoDB Atlas.
 
-TrackChat — Real-Time Chat & Device Tracking App (In Progress) | MERN, Socket.io, WebSocket
-- Real-time chat with live device-location tracking via Socket.io, WebSocket, HTML5 Geolocation, Leaflet.js.
-- Event-driven Node.js/Express.js backend with MongoDB for message persistence, read receipts.
-- JWT refresh-token rotation with mobile-first React.js frontend.
+Banking System --- Full-Stack Banking Application (GitHub | Live Demo)
+- Built a full-stack banking app (React.js frontend, Express.js/Node.js REST API) for accounts and transactions.
+- Split the codebase into independently deployable frontend/backend modules with isolated build pipelines.
+- Deployed a unified CI/CD pipeline --- Render (backend), Vercel (frontend) --- from a single repo.
 
-Banking System — Full-Stack Banking Application
-- Full-stack banking app (React.js + RESTful Express.js/Node.js API) for accounts and transactions.
-- Independently deployable frontend/backend modules. Backend on Render, frontend on Vercel.
+CropAI --- AI-Powered Crop Disease Detection Platform (GitHub | Live Demo)
+- Built a platform that detects crop diseases from leaf photos via an in-browser TensorFlow.js model, paired with an LLM API for treatment recommendations.
+- Designed a federated-learning-style architecture to aggregate model updates across users without centralizing raw data.
+- Added Supabase (PostgreSQL) auth, Socket.io real-time updates, and Leaflet-based disease mapping.
 
-EDUCATION:
-JIS University, Kolkata, India — B.Tech Computer Science and Engineering — Aug 2022 – May 2026
+TrackChat --- Real-Time Chat & Device-Tracking App (In Progress) | MERN, Socket.io, WebSocket
+- Building a real-time chat app with live device tracking (Geolocation API, Leaflet) and JWT refresh-token auth on Node.js/Express.
 
-CERTIFICATIONS:
-Cisco Certified Network Associate — Collaboration (CCNA-C), Simplilearn — Jul 2024
-Generative AI for Developers (Advanced), Google Skills — In Progress`;
+EDUCATION & CERTIFICATIONS:
+JIS University, Kolkata --- B.Tech in Computer Science and Engineering (Aug 2022 -- May 2026)
+Cisco CCNA --- Collaboration, Simplilearn (2024) | Generative AI for Developers (Advanced), Google Skills --- In Progress`;
 
 export const MASTER_CV_LATEX = `
-\\documentclass[a4paper,10pt]{article}
+\\documentclass[10pt,a4paper]{article}
 
 \\usepackage[T1]{fontenc}
 \\usepackage{lmodern}
-\\usepackage[hidelinks]{hyperref}
-\\usepackage[left=0.55in, right=0.55in, top=0.28in, bottom=0.28in]{geometry}
+\\usepackage[top=0.22in,bottom=0.22in,left=0.55in,right=0.55in]{geometry}
 \\usepackage{titlesec}
 \\usepackage{enumitem}
+\\usepackage{xcolor}
+\\usepackage[hidelinks]{hyperref}
+\\usepackage{parskip}
+
+\\definecolor{headcol}{RGB}{25,42,68}
+\\definecolor{linkcol}{RGB}{20,60,110}
+
+\\hypersetup{
+    colorlinks=true,
+    linkcolor=linkcol,
+    urlcolor=linkcol,
+    pdftitle={Saikat Maji - Resume - Software Engineer / MERN Stack Developer},
+    pdfauthor={Saikat Maji}
+}
+
+\\titleformat{\\section}
+  {\\normalfont\\Large\\bfseries\\color{headcol}}
+  {}{0em}{}
+  [{\\vspace{1pt}\\color{headcol}\\titlerule[0.8pt]}]
+\\titlespacing*{\\section}{0pt}{6pt}{3pt}
+
+\\setlist[itemize]{leftmargin=15pt, itemsep=0.6pt, topsep=0.6pt, parsep=0pt, partopsep=0pt}
 
 \\pagestyle{empty}
-\\setlength{\\parskip}{0pt}
 \\setlength{\\parindent}{0pt}
-\\renewcommand{\\baselinestretch}{0.96}
+\\setlength{\\parskip}{1pt}
 
-\\titleformat{\\section}{\\large\\bfseries}{}{0em}{}[\\vspace{1pt}\\hrule\\vspace{1pt}]
-\\titlespacing*{\\section}{0pt}{4pt}{1pt}
-
-\\setlist[itemize]{leftmargin=0.16in, itemsep=0pt, parsep=0pt, topsep=0pt, partopsep=0pt}
-
-\\newcommand{\\heading}[4]{%
-  \\noindent\\textbf{#1}\\hfill\\textbf{\\small #2}\\\\
-  \\textit{\\small #3}\\hfill\\textit{\\small #4}\\\\[0pt]
-}
-\\newcommand{\\headingOne}[2]{%
-  \\noindent\\textbf{#1}\\hfill\\small #2\\\\[0pt]
-}
-\\newcommand{\\headingBare}[1]{%
-  \\noindent\\textbf{#1}\\\\[0pt]
-}
+\\newcommand{\\heading}[2]{\\noindent\\textbf{#1}\\hfill\\textit{\\small #2}\\par}
+\\newcommand{\\subheading}[1]{\\noindent\\textit{\\small #1}\\par\\vspace{2pt}}
 
 \\begin{document}
+\\raggedright
 
-% ---------- HEADER ----------
+% ================= HEADER =================
 \\begin{center}
-  {\\LARGE \\bfseries SAIKAT MAJI}\\\\[3pt]
-  \\small
-  +91-8509233422 ~$|$~
-  \\href{mailto:Saikatmaji200@gmail.com}{Saikatmaji200@gmail.com} ~$|$~
-  \\href{http://www.linkedin.com/in/saikat-maji-}{linkedin.com/in/saikat-maji-} ~$|$~
-  \\href{https://github.com/GwSaikat}{github.com/GwSaikat} ~$|$~
-  \\href{https://leetcode.com/u/Alpha7679/}{leetcode.com/Alpha7679}
+    {\\huge\\bfseries SAIKAT MAJI}\\\\[2pt]
+    {\\normalsize Full-Stack Software Engineer --- MERN Stack}\\\\[3pt]
+    \\small
+    +91-8509233422 \\textbar\\ \\href{mailto:saikatmaji200@gmail.com}{saikatmaji200@gmail.com} \\textbar\\ Kolkata, India\\\\[1pt]
+    \\href{https://frontend-snowy-eight-57.vercel.app}{frontend-snowy-eight-57.vercel.app} \\textbar\\ 
+    \\href{https://github.com/GwSaikat}{github.com/GwSaikat} \\textbar\\ 
+    \\href{https://www.linkedin.com/in/saikat-maji-sde}{linkedin.com/in/saikat-maji-sde}
 \\end{center}
-\\vspace{-7pt}
 
-% ---------- SUMMARY ----------
+% ================= SUMMARY =================
 \\section*{Summary}
 % AI_EDITABLE_SUMMARY_START %
-Computer Science graduate and full-stack developer skilled in building production-style MERN applications, real-time systems, and AI-integrated features with LangChain and RAG. Proficient in React.js, Node.js/Express.js, REST API design, and core CS fundamentals (DSA, OOP, DBMS, System Design). Seeking a \\textbf{MERN Stack Developer} / Software Engineer role.
+Computer Science graduate and full-stack MERN developer with freelance experience shipping production web apps end-to-end. Skilled in real-time systems, REST APIs, and LLM-integrated features (LangChain, RAG). Seeking a Software Engineer / MERN Stack Developer role at a startup.
 % AI_EDITABLE_SUMMARY_END %
 
-% ---------- TECHNICAL SKILLS ----------
+% ================= SKILLS =================
 \\section*{Technical Skills}
 % AI_EDITABLE_SKILLS_START %
 \\begin{itemize}
-  \\item \\textbf{Languages:} JavaScript (ES6+), TypeScript, C++, SQL, HTML, CSS
-  \\item \\textbf{Frontend / Backend:} React.js, Next.js ~$|$~ Node.js, Express.js, REST APIs, WebSocket
-  \\item \\textbf{AI / LLM:} LangChain, RAG, AI Integration (OpenAI API)
-  \\item \\textbf{Databases \\& Infra / Auth:} MongoDB, Redis, Docker (Basics) ~$|$~ JWT, bcrypt, RBAC
-  \\item \\textbf{Dev Tools \\& Deployment:} Git, GitHub, Postman, CI/CD (Vercel/Render auto-deploy on push), Vercel, Netlify, Render
-  \\item \\textbf{Core CS:} Data Structures \\& Algorithms, OOP, DBMS, System Design, Operating Systems
+    \\item \\textbf{Languages:} JavaScript (ES6+), TypeScript, C++, SQL, HTML5, CSS3
+    \\item \\textbf{Frontend:} React.js, Next.js
+    \\item \\textbf{Backend:} Node.js, Express.js, REST API Design, WebSocket
+    \\item \\textbf{AI / LLM:} LangChain, Retrieval-Augmented Generation (RAG), LLM APIs
+    \\item \\textbf{Databases:} MongoDB, Redis, MySQL
+    \\item \\textbf{Auth \\& Security:} JWT, bcrypt, Role-Based Access Control (RBAC)
+    \\item \\textbf{Testing:} Vitest, Jest
+    \\item \\textbf{DevOps \\& Tools:} Git, GitHub, Docker, CI/CD (Vercel, Render), Postman
+    \\item \\textbf{Core CS:} Data Structures \\& Algorithms, OOP, DBMS, Operating Systems, System Design
 \\end{itemize}
 % AI_EDITABLE_SKILLS_END %
 
-% ---------- EXPERIENCE ----------
+% ================= EXPERIENCE =================
 \\section*{Experience}
 
-\\heading{Freelance Full-Stack Developer}{2025 -- Present}{Self-Employed}{Remote}
+\\heading{Freelance Full-Stack Developer}{2025 -- Present}
+\\subheading{Self-Employed, Remote}
 \\begin{itemize}
-  \\item Designed and deployed full-stack management systems for two clients (a gym and a diagnostic center), from initial requirements through production launch.
-  \\item Built responsive, role-based web apps that digitized scheduling, client records, and daily operations, replacing manual processes.
-  \\item Owned the full development lifecycle -- requirements, architecture, development, testing, and deployment -- while handling client communication directly.
+    \\item Built and deployed full-stack management systems for 2 clients (a gym and a diagnostic center), from requirements to production launch.
+    \\item Replaced manual scheduling and record-keeping with role-based web apps for non-technical staff.
+    \\item Owned the entire lifecycle solo --- architecture, development, testing, deployment, and client communication.
 \\end{itemize}
 
-\\headingBare{Virtual Internship -- Thiranex (Full-Stack Development)}
+\\heading{Additional Experience}{}
 \\begin{itemize}
-  \\item Built a Task Management Application enabling task creation, assignment, and status tracking for teams.
-  \\item Developed an E-Commerce Web Application with product browsing, cart, and order management.
-  \\item Created a Blog Platform with Comments, including content publishing and threaded discussions.
+    \\item \\textbf{Thiranex} (Virtual Internship): built 3 full-stack apps --- a task manager, an e-commerce store, and a blog platform with threaded comments.
+    \\item \\textbf{Forage} (Startup Simulation): shipped frontend fixes and new backend features from real user feedback for a simulated product team.
 \\end{itemize}
 
-\\headingBare{Software Engineering Job Simulation -- Forage}
-\\begin{itemize}
-  \\item Completed a virtual job simulation performing realistic software engineering tasks for a Y Combinator--style startup application.
-  \\item Implemented frontend improvements from user feedback and shipped new backend features.
-  \\item Analyzed product and feature releases to evaluate user impact and guide development decisions.
-\\end{itemize}
-
-% ---------- PROJECTS ----------
+% ================= PROJECTS =================
 \\section*{Projects}
 
 % AI_EDITABLE_PROJECTS_START %
-\\headingOne{FlowForge -- Real-Time Critical Path Orchestration Engine}{\\href{https://github.com/Gwsaikat/FlowForge}{GitHub} ~$|$~ \\href{https://client-one-bay-37.vercel.app/}{Live Demo}}
+\\heading{FlowForge --- Real-Time Critical Path Orchestration Engine}{}
+\\subheading{\\href{https://github.com/GwSaikat/FlowForge}{GitHub} \\textbar\\ \\href{https://client-one-bay-37.vercel.app/}{Live Demo}}
 \\begin{itemize}
-  \\item Engineered a real-time CPM engine modeling projects as dependency graphs, implementing topological sort, DFS cycle detection, and CPM forward/backward-pass algorithms from scratch.
-  \\item Integrated LangChain and the OpenAI API for AI-driven features, including an automated standup-brief generator and a semantic dependency detector for hidden task relationships.
-  \\item Built a real-time layer with Socket.io/WebSocket, Express.js, and Redis broadcasting graph updates within milliseconds; deployed on Render/Vercel with MongoDB Atlas.
+    \\item Engineered a real-time CPM engine from scratch --- Kahn's topological sort, DFS cycle detection, and forward/backward-pass scheduling --- to auto-calculate the critical path on any task graph.
+    \\item Integrated LangChain and an LLM API for AI features: an automated standup-brief generator and a semantic dependency detector.
+    \\item Built a real-time sync layer (Socket.io, Redis) broadcasting graph updates within milliseconds; deployed on Vercel/Render with MongoDB Atlas.
 \\end{itemize}
 
-\\headingOne{TrackChat -- Real-Time Chat \\& Device Tracking App (In Progress)}{MERN, Socket.io, WebSocket}
+\\heading{Banking System --- Full-Stack Banking Application}{}
+\\subheading{\\href{https://github.com/GwSaikat/Banking-System}{GitHub} \\textbar\\ \\href{https://banking-system-sepia.vercel.app}{Live Demo}}
 \\begin{itemize}
-  \\item Building a real-time chat app with live device-location tracking via Socket.io, WebSocket, and the HTML5 Geolocation API, rendered on an interactive Leaflet.js map.
-  \\item Architecting an event-driven Node.js/Express.js backend with MongoDB for message persistence, read receipts, typing indicators, and group chat.
-  \\item Implementing JWT refresh-token rotation with a mobile-first React.js frontend using Context API and lazy loading.
+    \\item Built a full-stack banking app (React.js frontend, Express.js/Node.js REST API) for accounts and transactions.
+    \\item Split the codebase into independently deployable frontend/backend modules with isolated build pipelines.
+    \\item Deployed a unified CI/CD pipeline --- Render (backend), Vercel (frontend) --- from a single repo.
 \\end{itemize}
 
-\\headingOne{Banking System -- Full-Stack Banking Application}{\\href{https://github.com/Gwsaikat/Banking-System}{GitHub} ~$|$~ \\href{https://banking-system-sepia.vercel.app}{Live Demo}}
+\\heading{CropAI --- AI-Powered Crop Disease Detection Platform}{}
+\\subheading{\\href{https://github.com/GwSaikat/CropAI}{GitHub} \\textbar\\ \\href{https://cropai-app.vercel.app}{Live Demo}}
 \\begin{itemize}
-  \\item Engineered a full-stack banking application with a React.js frontend and RESTful Express.js/Node.js API to handle core banking operations such as accounts and transactions.
-  \\item Structured the codebase into independently deployable frontend and backend modules with isolated build pipelines.
-  \\item Deployed a unified pipeline hosting the backend on Render and frontend on Vercel, enabling continuous delivery from a single repo.
+    \\item Built a platform that detects crop diseases from leaf photos via an in-browser TensorFlow.js model, paired with an LLM API for treatment recommendations.
+    \\item Designed a federated-learning-style architecture to aggregate model updates across users without centralizing raw data.
+    \\item Added Supabase (PostgreSQL) auth, Socket.io real-time updates, and Leaflet-based disease mapping.
+\\end{itemize}
+
+\\heading{TrackChat --- Real-Time Chat \\& Device-Tracking App (In Progress)}{}
+\\subheading{MERN, Socket.io, WebSocket}
+\\begin{itemize}
+    \\item Building a real-time chat app with live device tracking (Geolocation API, Leaflet) and JWT refresh-token auth on Node.js/Express.
 \\end{itemize}
 % AI_EDITABLE_PROJECTS_END %
 
-% ---------- EDUCATION ----------
-\\section*{Education}
-\\heading{JIS University}{Aug 2022 -- May 2026}{Bachelor of Technology in Computer Science and Engineering}{Kolkata, India}
+% ================= EDUCATION & CERTIFICATIONS =================
+\\enlargethispage{2\\baselineskip}
+\\section*{Education \\& Certifications}
+\\heading{JIS University, Kolkata --- B.Tech in Computer Science and Engineering}{Aug 2022 -- May 2026}
+Cisco CCNA --- Collaboration, Simplilearn (2024) \\textbar\\ Generative AI for Developers (Advanced), Google Skills --- In Progress
 
-% ---------- CERTIFICATIONS ----------
-\\section*{Certifications}
-\\begin{itemize}
-  \\item Cisco Certified Network Associate -- Collaboration (CCNA-C), Simplilearn -- Jul 2024
-  \\item Generative AI for Developers (Advanced), Google Skills -- In Progress
-\\end{itemize}
+% AI_EDITABLE_ATS_KEYWORDS_START %
+% AI_EDITABLE_ATS_KEYWORDS_END %
 
 \\end{document}
 `;

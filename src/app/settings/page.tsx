@@ -144,6 +144,28 @@ export default function SettingsPage() {
               {settings?.apiKeys?.apollo ? <span className="text-[#34d399] font-mono text-[11px]">ACTIVE</span> : <span className="text-[#ef4444] font-mono text-[11px]">MISSING</span>}
             </div>
           </div>
+
+          {/* Serper Credit Balance */}
+          <div className="mt-3 pt-3 border-t border-[rgba(255,255,255,0.08)]">
+            <div className="flex justify-between items-center text-xs">
+              <span className="text-[#A1A1AA]">Serper Credits Remaining</span>
+              {settings?.serperCreditsRemaining !== null && settings?.serperCreditsRemaining !== undefined ? (
+                <span className={`font-mono text-[11px] font-semibold ${
+                  settings.serperCreditsRemaining > 500 ? 'text-[#34d399]' :
+                  settings.serperCreditsRemaining > 200 ? 'text-[#facc15]' :
+                  'text-[#ef4444]'
+                }`}>
+                  {settings.serperCreditsRemaining.toLocaleString()} credits
+                  {settings.serperCreditsRemaining < 200 && ' ⚠️ LOW'}
+                </span>
+              ) : (
+                <span className="text-[#71717A] font-mono text-[11px]">Not yet tracked</span>
+              )}
+            </div>
+            <p className="text-[10px] text-[#71717A] mt-1">
+              Serper free tier is a one-time 2,500-credit budget. Queries are tiered to conserve credits.
+            </p>
+          </div>
         </Card>
       </div>
 
@@ -196,6 +218,24 @@ export default function SettingsPage() {
             className="h-8 text-xs bg-[#111827] text-[#FAFAFA] border-[rgba(255,255,255,0.08)] hover:border-[#6366f1]/40"
           >
             Sync Startup Funding Leads
+          </Button>
+          <Button
+            onClick={async () => {
+              if (confirm('Are you sure you want to delete ALL database records and cached CV files for a fresh start?')) {
+                const res = await fetch('/api/database/clear', { method: 'DELETE' });
+                const data = await res.json();
+                if (data.success) {
+                  alert('Database & CV Storage reset completely!');
+                  window.location.reload();
+                } else {
+                  alert('Failed to clear database: ' + data.error);
+                }
+              }
+            }}
+            variant="outline"
+            className="h-8 text-xs bg-[#ef4444]/10 text-[#ef4444] border-[#ef4444]/30 hover:bg-[#ef4444]/20"
+          >
+            Fresh Start (Wipe All Data) 💣
           </Button>
         </div>
       </Card>

@@ -29,6 +29,11 @@ export async function GET() {
 
     const gmailConnected = await isGmailConnected();
 
+    // Serper credit balance
+    const serperCredits = await prisma.appState.findUnique({
+      where: { key: 'serper_credits_remaining' },
+    });
+
     // Just check if they exist in env for the frontend status indicators
     const apiKeys = {
       adzuna: isKeyConfigured('ADZUNA_APP_ID') && isKeyConfigured('ADZUNA_APP_KEY'),
@@ -47,6 +52,7 @@ export async function GET() {
       gmailConnected,
       gmailEmail: gmailEmail?.value || null,
       apiKeys,
+      serperCreditsRemaining: serperCredits?.value ? parseInt(serperCredits.value, 10) : null,
     });
   } catch (error) {
     console.error('[API] Settings GET error:', error);

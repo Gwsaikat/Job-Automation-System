@@ -75,6 +75,36 @@ export default function JobsPage() {
     setTimeout(fetchJobs, 2000);
   };
 
+  const handleFreshStart = async () => {
+    if (confirm('Are you sure you want to delete ALL jobs, funding leads, and storage files for a 100% fresh start?')) {
+      const res = await fetch('/api/database/clear', { method: 'DELETE' });
+      const data = await res.json();
+      if (data.success) {
+        alert('Database & CV Storage reset completely! Ready for a fresh start.');
+        fetchJobs();
+      } else {
+        alert('Failed to clear database: ' + (data.error || 'Unknown error'));
+      }
+    }
+  };
+
+  const handleAutoApply = async (id: number) => {
+    alert('Launching Playwright browser automation for ATS Form filling...');
+    const res = await fetch('/api/jobs/auto-apply', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ jobId: id, dryRun: false }),
+    });
+    const data = await res.json();
+    if (data.success) {
+      alert(`Auto-Apply Success! ${data.result?.message || ''}`);
+      fetchJobs();
+    } else {
+      alert(`Auto-Apply Note: ${data.error || data.result?.message || 'Check logs or try dry run.'}`);
+      fetchJobs();
+    }
+  };
+
   return (
     <div className="p-8 max-w-7xl mx-auto space-y-6 page-fade">
       {/* Header */}
@@ -94,7 +124,15 @@ export default function JobsPage() {
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
+          <Button
+            onClick={handleFreshStart}
+            variant="outline"
+            className="h-8 px-3 text-xs bg-[#ef4444]/10 border-[#ef4444]/30 hover:bg-[#ef4444]/20 text-[#ef4444]"
+          >
+            Fresh Start 💣
+          </Button>
+
           <Button
             onClick={async () => {
               alert('Syncing Gmail inbox for recruiter responses...');
@@ -183,6 +221,7 @@ export default function JobsPage() {
               >
                 <option value="all">All Application Statuses</option>
                 <option value="Pending">Pending Sync</option>
+                <option value="Draft Ready">Draft Ready</option>
                 <option value="Applied">Applied</option>
                 <option value="Interview">Interview</option>
                 <option value="Offer">Offer</option>
@@ -284,9 +323,22 @@ export default function JobsPage() {
                     </td>
 
                     <td className="px-4 py-3.5">
-                      <span className="ag-badge">
-                        {job.applicationStatus || 'Pending'}
-                      </span>
+                      {job.processingError ? (
+                        <div className="group relative">
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-mono bg-[#ef4444]/10 text-[#ef4444] border border-[#ef4444]/30 cursor-help">
+                            <AlertCircle className="w-3 h-3" />
+                            Error
+                          </span>
+                          <div className="absolute z-50 bottom-full left-0 mb-2 hidden group-hover:block w-72 p-2.5 bg-[#18181B] border border-[#ef4444]/30 rounded-lg shadow-xl text-[10px] text-[#A1A1AA] font-mono leading-relaxed break-words">
+                            <span className="text-[#ef4444] font-semibold block mb-1">Pipeline Error:</span>
+                            {job.processingError}
+                          </div>
+                        </div>
+                      ) : (
+                        <span className="ag-badge">
+                          {job.applicationStatus || 'Pending'}
+                        </span>
+                      )}
                     </td>
 
                     <td className="px-4 py-3.5 text-right space-x-1.5 whitespace-nowrap">
@@ -323,6 +375,23 @@ export default function JobsPage() {
                         >
                           Tailor
                         </Button>
+                      )}
+
+                      <Button
+                        size="sm"
+                        onClick={() => handleAutoApply(job.id)}
+                        className="h-7 text-[11px] bg-[#34d399]/10 hover:bg-[#34d399]/20 text-[#34d399] border border-[#34d399]/30 px-2 font-medium"
+                        title="Auto-fill application form using Playwright browser automation"
+                      >
+                        <Sparkles className="w-3 h-3 mr-1 text-[#34d399]" /> Apply 🚀
+                      </Button>
+
+                      {job.notes?.includes('Auto-Apply') && (
+                        <a href={`/api/jobs/screenshot?id=${job.id}`} target="_blank" rel="noreferrer">
+                          <Button size="sm" variant="ghost" className="h-7 text-[11px] text-[#facc15] hover:bg-[#facc15]/10 px-2 font-medium" title="View Playwright full-page proof screenshot">
+                            Proof 📸
+                          </Button>
+                        </a>
                       )}
 
                       {job.coldMailDraftId && (
@@ -498,6 +567,14 @@ export default function JobsPage() {
                   </div>
 
                   <div className="border-t border-[rgba(255,255,255,0.08)] pt-4 space-y-2">
+                    <Button
+                      onClick={() => handleAutoApply(selectedJob.id)}
+                      className="w-full h-8 text-xs bg-[#34d399] hover:bg-[#059669] text-[#09090B] font-bold flex items-center justify-center gap-1.5 shadow-md"
+                    >
+                      <Sparkles className="w-3.5 h-3.5" />
+                      <span>Run Playwright Auto-Apply 🚀</span>
+                    </Button>
+
                     <a href={selectedJob.jobUrl} target="_blank" rel="noreferrer" className="block">
                       <Button className="w-full h-8 text-xs bg-[#6366f1] hover:bg-[#4f46e5] text-white flex items-center justify-center gap-1.5">
                         <span>Open Original Job Posting</span>

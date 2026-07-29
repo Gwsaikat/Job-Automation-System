@@ -1,7 +1,7 @@
 // ============================================
 // Serper.dev Scraper — Section 4.2
 // Searches across ATS platforms (Greenhouse, Lever, Ashby, etc.)
-// Uses simpler queries compatible with free tier
+// v2.1: Tiered scheduling to conserve finite Serper credits
 // ============================================
 
 import { getConfig } from '../config';
@@ -16,49 +16,64 @@ interface SerperResult {
 
 interface SerperResponse {
   organic: SerperResult[];
+  credits?: number;
 }
 
-/// Career OS — Global Multi-Platform Scraper across ALL major job portals
-const SERPER_QUERIES = [
-  // ---- 1. Major Job Portals (LinkedIn, Naukri, Indeed, Wellfound, Cutshort, Instahyre, Glassdoor, Foundit) ----
-  'site:linkedin.com/jobs "full stack" OR "MERN" OR "backend" OR "software engineer" fresher OR "0-1 year" OR "entry level" India OR remote',
-  'site:linkedin.com/jobs "AI full stack" OR "MERN stack" OR "graduate trainee" India OR remote 2026',
-  'site:naukri.com "full stack" OR "MERN" OR "backend developer" OR "software engineer" fresher OR "0-1 year" Kolkata OR Bangalore OR remote',
-  'site:naukri.com "graduate engineer trainee" OR "associate software engineer" "0 years" Kolkata OR remote',
-  'site:in.indeed.com OR site:indeed.com "software engineer" OR "full stack" OR "MERN" fresher OR "entry level" India remote',
-  'site:wellfound.com OR site:angel.co "full stack" OR "MERN" OR "software engineer" OR "backend" fresher OR "0-1" India remote',
-  'site:cutshort.io "full stack" OR "MERN" OR "backend" OR "AI" fresher OR junior India Kolkata',
-  'site:instahyre.com "software engineer" OR "MERN" OR "backend" entry level India',
-  'site:ambitionbox.com "software engineer" OR "full stack" OR "MERN" fresher India',
-  'site:foundit.in "software engineer" OR "MERN" fresher Kolkata OR Bangalore OR remote',
-  'site:glassdoor.co.in OR site:glassdoor.com "software engineer" fresher OR "entry level" remote India',
+// ---- Tiered Query System ----
+// Tier 1: Run daily (~12 queries) — highest-signal platforms
+// Tier 2: Run every 3rd day (~12 queries) — secondary platforms
+// Tier 3: Run weekly (~11 queries) — broad/redundant searches
 
-  // ---- 2. ATS Platforms (Greenhouse, Lever, Ashby, Workday, SmartRecruiters, Jobvite) ----
+const TIER_1_QUERIES = [
+  // LinkedIn (merged into fewer queries with broader OR clauses)
+  'site:linkedin.com/jobs ("full stack" OR "MERN" OR "backend" OR "software engineer" OR "AI full stack" OR "graduate trainee") (fresher OR "0-1 year" OR "entry level") (India OR remote) 2026',
+  // Naukri (merged)
+  'site:naukri.com ("full stack" OR "MERN" OR "backend developer" OR "software engineer" OR "graduate engineer trainee" OR "associate software engineer") (fresher OR "0-1 year" OR "0 years") (Kolkata OR Bangalore OR remote)',
+  // Indeed
+  'site:in.indeed.com OR site:indeed.com "software engineer" OR "full stack" OR "MERN" fresher OR "entry level" India remote',
+  // Wellfound/AngelList
+  'site:wellfound.com OR site:angel.co "full stack" OR "MERN" OR "software engineer" OR "backend" fresher OR "0-1" India remote',
+  // ATS Platforms — Greenhouse + Lever
   'site:boards.greenhouse.io react OR nodejs OR "full stack" fresher OR junior OR "entry level" India OR remote 2026',
   'site:jobs.lever.co "software engineer" OR "full stack developer" entry level OR fresher OR junior',
-  'site:jobs.ashbyhq.com developer OR engineer junior OR fresher India OR remote',
+  // ATS — Ashby + Workable
+  '(site:jobs.ashbyhq.com OR site:jobs.workable.com) "full stack" OR "frontend" OR "backend" junior India remote',
+  // ATS — SmartRecruiters + Workday + Jobvite
   'site:smartrecruiters.com software engineer fresher OR "new grad" India 2026',
   'site:myworkdayjobs.com "software developer" OR "software engineer" entry level India',
   'site:jobs.jobvite.com software engineer fresher OR junior India remote',
+  // Combined ATS
   '(site:boards.greenhouse.io OR site:jobs.lever.co) react nextjs nodejs MERN fresher 2026',
-  '(site:jobs.ashbyhq.com OR site:jobs.workable.com) "full stack" OR "frontend" OR "backend" junior India remote',
+];
 
-  // ---- 3. Global Remote Boards ----
+const TIER_2_QUERIES = [
+  // Cutshort
+  'site:cutshort.io "full stack" OR "MERN" OR "backend" OR "AI" fresher OR junior India Kolkata',
+  // Instahyre
+  'site:instahyre.com "software engineer" OR "MERN" OR "backend" entry level India',
+  // AmbitionBox
+  'site:ambitionbox.com "software engineer" OR "full stack" OR "MERN" fresher India',
+  // Foundit
+  'site:foundit.in "software engineer" OR "MERN" fresher Kolkata OR Bangalore OR remote',
+  // Glassdoor
+  'site:glassdoor.co.in OR site:glassdoor.com "software engineer" fresher OR "entry level" remote India',
+  // Global Remote Boards
   'site:remoteok.com react OR nodejs OR "full stack" developer 2026',
   'site:weworkremotely.com "full stack" OR react OR nodejs developer',
   'site:otta.com software engineer entry level OR junior remote',
   'site:himalayas.app react OR nodejs developer remote',
   'site:arc.dev react OR nodejs developer remote junior',
   'site:work.ycombinator.com software engineer OR developer remote',
+];
 
-  // ---- 4. Role Specific Coverage (MERN, AI Fullstack, Backend, SDE 1, Graduate Trainee) ----
+const TIER_3_QUERIES = [
+  // Role-specific broad searches
   '"MERN stack developer" fresher OR "0-1 year" India OR remote hiring apply',
   '"AI full stack developer" OR "AI engineer" fresher OR entry level remote 2026',
   '"backend developer" MERN nodejs fresher OR "0-1 yrs" Kolkata OR remote',
   '"software engineer" "max match" OR "skills" fresher India 2026 hiring',
   '"graduate engineer trainee" OR "graduate trainee" software India 2026',
-
-  // ---- 5. Indian Tech Unicorns & Global Leaders ----
+  // Indian Tech Unicorns & Global Leaders
   'Google Amazon Netflix software engineer SDE fresher new grad 2026 India',
   'Meta Microsoft Apple Adobe Salesforce software engineer fresher India 2026',
   'Zepto Razorpay CRED Groww Setu software engineer fresher India',
@@ -140,6 +155,28 @@ function generateSourceId(url: string): string {
   return `serper_${Math.abs(hash)}`;
 }
 
+// ---- Credit Tracking ----
+
+let latestSerperCredits: number | null = null;
+
+export function getLatestSerperCredits(): number | null {
+  return latestSerperCredits;
+}
+
+async function storeSerperCredits(credits: number): Promise<void> {
+  latestSerperCredits = credits;
+  try {
+    const prisma = (await import('../db')).default;
+    await prisma.appState.upsert({
+      where: { key: 'serper_credits_remaining' },
+      update: { value: String(credits) },
+      create: { key: 'serper_credits_remaining', value: String(credits) },
+    });
+  } catch {
+    // Non-critical — don't fail the scrape over a credit log issue
+  }
+}
+
 async function fetchSerper(query: string): Promise<RawJob[]> {
   const config = getConfig();
 
@@ -167,7 +204,23 @@ async function fetchSerper(query: string): Promise<RawJob[]> {
       return [];
     }
 
+    // ---- Track credits from response headers ----
+    const creditsHeader = response.headers.get('x-api-credits-remaining')
+      || response.headers.get('x-credits-remaining')
+      || response.headers.get('x-ratelimit-remaining');
+    if (creditsHeader) {
+      const credits = parseInt(creditsHeader, 10);
+      if (!isNaN(credits)) {
+        await storeSerperCredits(credits);
+      }
+    }
+
     const data: SerperResponse = await response.json();
+
+    // Also check if credits are in the JSON response body
+    if (data.credits !== undefined && data.credits !== null) {
+      await storeSerperCredits(data.credits);
+    }
 
     // Filter to only keep results that look like job postings
     return (data.organic || [])
@@ -209,9 +262,38 @@ async function fetchSerper(query: string): Promise<RawJob[]> {
   }
 }
 
+// ---- Tier Selection Logic ----
+
+function getQueriesForToday(): { queries: string[]; tierLabel: string } {
+  const dayOfMonth = new Date().getDate();
+  const dayOfWeek = new Date().getDay(); // 0 = Sunday
+
+  // Tier 1 always runs
+  const queries = [...TIER_1_QUERIES];
+  const tiers = ['T1'];
+
+  // Tier 2 runs every 3rd day (days 1,4,7,10,13,16,19,22,25,28)
+  if (dayOfMonth % 3 === 1) {
+    queries.push(...TIER_2_QUERIES);
+    tiers.push('T2');
+  }
+
+  // Tier 3 runs weekly (Sundays only)
+  if (dayOfWeek === 0) {
+    queries.push(...TIER_3_QUERIES);
+    tiers.push('T3');
+  }
+
+  return { queries, tierLabel: tiers.join('+') };
+}
+
 export async function scrapeSerper(): Promise<RawJob[]> {
+  const { queries, tierLabel } = getQueriesForToday();
+
+  console.log(`[Serper] Running ${queries.length} queries (tiers: ${tierLabel})`);
+
   const results = await Promise.allSettled(
-    SERPER_QUERIES.map((query) => fetchSerper(query))
+    queries.map((query) => fetchSerper(query))
   );
 
   const allJobs: RawJob[] = [];
@@ -230,6 +312,13 @@ export async function scrapeSerper(): Promise<RawJob[]> {
     }
   }
 
-  console.log(`[Serper] ${allJobs.length} unique jobs from ${SERPER_QUERIES.length} queries`);
+  // Log credit status
+  if (latestSerperCredits !== null) {
+    const creditWarning = latestSerperCredits < 200 ? ' ⚠️ LOW CREDITS!' : '';
+    console.log(`[Serper] Credits remaining: ${latestSerperCredits}${creditWarning}`);
+  }
+
+  console.log(`[Serper] ${allJobs.length} unique jobs from ${queries.length} queries (tiers: ${tierLabel})`);
   return allJobs;
 }
+

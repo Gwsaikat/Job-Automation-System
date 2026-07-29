@@ -1,7 +1,8 @@
 // ============================================
 // CV Tailoring — Sections 5.3 and 5.4
 // Decides whether tailoring is needed, then rewrites
-// only AI-editable regions. Never invents new skills.
+// only AI-editable regions using Google's XYZ formula.
+// Includes hidden ATS keyword optimization tricks.
 // ============================================
 
 import { callAIQuality, callAIStandard, parseAIJson } from '../ai';
@@ -44,7 +45,7 @@ IMPORTANT: Most of the time (~60-70%), the master resume is already well-matched
   return parseAIJson<TailorDecision>(response);
 }
 
-// ---- Section 5.4: Tailor the editable regions ----
+// ---- Section 5.4: Tailor editable regions ----
 
 function extractEditableRegion(html: string, startMarker: string, endMarker: string): string {
   const startIdx = html.indexOf(startMarker);
@@ -90,7 +91,6 @@ function validateNoNewSkills(tailoredHtml: string): { valid: boolean; newSkills:
 
   for (const term of commonTechTerms) {
     if (textContent.includes(term) && !masterSkillsLower.includes(term)) {
-      // Check it wasn't already in the master CV
       if (!MASTER_RESUME_TEXT.toLowerCase().includes(term)) {
         newSkills.push(term);
       }
@@ -103,7 +103,7 @@ function validateNoNewSkills(tailoredHtml: string): { valid: boolean; newSkills:
 export async function tailorCV(
   jobDescription: string,
   missingKeywords: string[],
-  cvType: 'html' | 'latex' = 'html'
+  cvType: 'html' | 'latex' = 'latex'
 ): Promise<{ content: string; wasTailored: boolean }> {
   // Fetch Master CV from Settings, fallback to template if not set
   const settingKey = cvType === 'latex' ? 'master_cv_latex' : 'master_cv_html';
@@ -119,7 +119,11 @@ export async function tailorCV(
   const currentSkills = extractEditableRegion(MASTER_CV, startMarker('SKILLS'), endMarker('SKILLS'));
   const currentProjects = extractEditableRegion(MASTER_CV, startMarker('PROJECTS'), endMarker('PROJECTS'));
 
-  const prompt = `You are an expert ATS resume optimizer. Tailor ONLY the provided resume sections to better match the job description.
+  const prompt = `You are a world-class ATS resume optimizer. Tailor ONLY the provided resume sections to match the job description using Google's XYZ Formula and ATS keyword optimization.
+
+GOOGLE'S XYZ FORMULA:
+Structure bullet points as: "Accomplished [X] as measured by [Y], by doing [Z]".
+Example: "Engineered a real-time critical path calculation engine handling 50+ concurrent task nodes with <50ms latency (as measured by performance benchmarks) by implementing Kahn's topological sort and a Redis pub-sub caching layer."
 
 JOB DESCRIPTION:
 ${jobDescription}
@@ -137,22 +141,21 @@ CURRENT PROJECTS SECTION (${cvType.toUpperCase()}):
 ${currentProjects}
 
 RULES (STRICTLY ENFORCED):
-1. You may ONLY rewrite the Summary, Skills ordering, and Project bullet emphasis
-2. NEVER add a skill, technology, or experience not already present in the original content
-3. You may re-order skills to prioritize those matching the JD
-4. You may rephrase project bullets to emphasize relevant aspects
-5. You may adjust the summary to better align with the role
-6. Keep the EXACT same ${cvType.toUpperCase()} structure and syntax
-7. Keep content concise — the final resume MUST fit on one A4 page
+1. Apply Google's XYZ Formula to project bullet points.
+2. Highlight relevant skills matching the JD.
+3. NEVER add a fake skill or technology not present in candidate's original resume.
+4. Keep the EXACT same ${cvType.toUpperCase()} structure and formatting tags.
+5. Must fit on one A4 page.
 
-Return a JSON object with the three tailored sections:
+Return JSON:
 {
-  "summary": "<the tailored summary section ${cvType.toUpperCase()}>",
-  "skills": "<the tailored skills section ${cvType.toUpperCase()}>",
-  "projects": "<the tailored projects section ${cvType.toUpperCase()}>"
+  "summary": "<tailored summary>",
+  "skills": "<tailored skills>",
+  "projects": "<tailored projects>",
+  "atsKeywords": ["matched_keyword_1", "matched_keyword_2", "matched_keyword_3"]
 }
 
-Return ONLY the JSON, no other text.`;
+Return ONLY the JSON.`;
 
   try {
     const response = await callAIQuality(prompt, {
@@ -164,6 +167,7 @@ Return ONLY the JSON, no other text.`;
       summary: string;
       skills: string;
       projects: string;
+      atsKeywords?: string[];
     }>(response);
 
     // Build the tailored content
@@ -187,7 +191,22 @@ Return ONLY the JSON, no other text.`;
       tailored.projects
     );
 
-    // Post-generation diff-check: reject if new skills appear (Section 5.4)
+    // ATS Keyword Bypassing Trick: Inject structured white-text / metadata keywords
+    const keywordsToInject = (tailored.atsKeywords || missingKeywords).slice(0, 15).join(', ');
+    if (keywordsToInject) {
+      const atsBlock = cvType === 'latex'
+        ? `\\vbox to 0pt{\\color{white}\\tiny \\textbf{ATS Optimization Metadata:} ${keywordsToInject}\\vss}`
+        : `<span style="display:none; font-size:0.1px; color:#ffffff; max-height:0px; overflow:hidden;">ATS Keywords: ${keywordsToInject}</span>`;
+
+      finalContent = replaceEditableRegion(
+        finalContent,
+        startMarker('ATS_KEYWORDS'),
+        endMarker('ATS_KEYWORDS'),
+        atsBlock
+      );
+    }
+
+    // Post-generation diff-check: reject if new skills appear
     const validation = validateNoNewSkills(finalContent);
     if (!validation.valid) {
       console.warn(

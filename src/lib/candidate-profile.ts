@@ -25,10 +25,11 @@ export interface CandidateExperience {
 export const CANDIDATE = {
   // ---- Identity ----
   name: 'Saikat Maji',
-  email: 'Saikatmaji200@gmail.com',
+  email: 'saikatmaji200@gmail.com',
   phone: '+91-8509233422',
-  linkedin: 'linkedin.com/in/saikat-maji-',
+  linkedin: 'linkedin.com/in/saikat-maji-sde',
   github: 'github.com/GwSaikat',
+  portfolio: 'frontend-snowy-eight-57.vercel.app',
   leetcode: 'leetcode.com/u/Alpha7679',
 
   // ---- Location & Authorization ----
@@ -47,14 +48,15 @@ export const CANDIDATE = {
 
   // ---- Technical Skills (structured) ----
   skills: {
-    languages: ['JavaScript (ES6+)', 'TypeScript', 'C++', 'SQL', 'HTML', 'CSS'],
+    languages: ['JavaScript (ES6+)', 'TypeScript', 'C++', 'SQL', 'HTML5', 'CSS3'],
     frontend: ['React.js', 'Next.js'],
-    backend: ['Node.js', 'Express.js', 'REST APIs', 'WebSocket'],
-    ai: ['LangChain', 'RAG', 'AI Integration (OpenAI API)'],
-    databases: ['MongoDB', 'Redis'],
-    infrastructure: ['Docker (Basics)', 'JWT', 'bcrypt', 'RBAC'],
-    devtools: ['Git', 'GitHub', 'Postman', 'CI/CD', 'Vercel', 'Netlify', 'Render'],
-    coreCS: ['Data Structures & Algorithms', 'OOP', 'DBMS', 'System Design', 'Operating Systems'],
+    backend: ['Node.js', 'Express.js', 'REST API Design', 'WebSocket'],
+    ai: ['LangChain', 'Retrieval-Augmented Generation (RAG)', 'LLM APIs'],
+    databases: ['MongoDB', 'Redis', 'MySQL'],
+    infrastructure: ['JWT', 'bcrypt', 'Role-Based Access Control (RBAC)'],
+    testing: ['Vitest', 'Jest'],
+    devtools: ['Git', 'GitHub', 'Docker', 'CI/CD (Vercel, Render)', 'Postman'],
+    coreCS: ['Data Structures & Algorithms', 'OOP', 'DBMS', 'Operating Systems', 'System Design'],
   },
 
   // ---- Projects ----
@@ -63,26 +65,35 @@ export const CANDIDATE = {
       name: 'FlowForge — Real-Time Critical Path Orchestration Engine',
       shortName: 'FlowForge',
       techStack: ['LangChain', 'OpenAI API', 'Socket.io', 'WebSocket', 'Express.js', 'Redis', 'MongoDB', 'React.js', 'Vercel', 'Render'],
-      description: 'Real-time CPM engine modeling projects as dependency graphs with topological sort, DFS cycle detection, and CPM forward/backward-pass algorithms. AI-driven standup-brief generator and semantic dependency detector.',
-      githubUrl: 'https://github.com/Gwsaikat/FlowForge',
+      description: 'Engineered a real-time CPM engine from scratch with Kahn\'s topological sort, DFS cycle detection, and CPM forward/backward-pass scheduling. Integrated LangChain/OpenAI for automated standup briefs and semantic dependency detection.',
+      githubUrl: 'https://github.com/GwSaikat/FlowForge',
       liveUrl: 'https://client-one-bay-37.vercel.app/',
       status: 'completed',
-    },
-    {
-      name: 'TrackChat — Real-Time Chat & Device Tracking App',
-      shortName: 'TrackChat',
-      techStack: ['MERN', 'Socket.io', 'WebSocket', 'Leaflet.js', 'HTML5 Geolocation API', 'MongoDB', 'React.js', 'Node.js', 'Express.js', 'JWT'],
-      description: 'Real-time chat app with live device-location tracking, interactive maps, message persistence, read receipts, typing indicators, and group chat.',
-      status: 'in-progress',
     },
     {
       name: 'Banking System — Full-Stack Banking Application',
       shortName: 'Banking System',
       techStack: ['React.js', 'Express.js', 'Node.js', 'REST API', 'Vercel', 'Render'],
-      description: 'Full-stack banking application handling core banking operations with independently deployable frontend/backend modules.',
-      githubUrl: 'https://github.com/Gwsaikat/Banking-System',
+      description: 'Built a full-stack banking app with independently deployable frontend/backend modules and continuous delivery pipelines.',
+      githubUrl: 'https://github.com/GwSaikat/Banking-System',
       liveUrl: 'https://banking-system-sepia.vercel.app',
       status: 'completed',
+    },
+    {
+      name: 'CropAI — AI-Powered Crop Disease Detection Platform',
+      shortName: 'CropAI',
+      techStack: ['TensorFlow.js', 'LLM API', 'Supabase', 'PostgreSQL', 'Socket.io', 'Leaflet.js', 'React.js'],
+      description: 'Built a crop disease detection platform with in-browser TensorFlow.js, LLM treatment recommendations, Supabase auth, and disease mapping.',
+      githubUrl: 'https://github.com/GwSaikat/CropAI',
+      liveUrl: 'https://cropai-app.vercel.app',
+      status: 'completed',
+    },
+    {
+      name: 'TrackChat — Real-Time Chat & Device-Tracking App',
+      shortName: 'TrackChat',
+      techStack: ['MERN', 'Socket.io', 'WebSocket', 'Leaflet.js', 'HTML5 Geolocation API', 'MongoDB', 'React.js', 'Node.js', 'Express.js', 'JWT'],
+      description: 'Building a real-time chat app with live device location tracking, interactive maps, message persistence, read receipts, and JWT refresh token auth.',
+      status: 'in-progress',
     },
   ] as CandidateProject[],
 

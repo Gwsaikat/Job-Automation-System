@@ -1,12 +1,17 @@
 // ============================================
 // Manual Paste API — Section 4.8
 // WhatsApp/manual job paste handler
+// Now runs full pipeline: filter → score → CV → outreach
 // ============================================
 
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/db';
 import { callAIStandard, parseAIJson } from '@/lib/ai';
-import { filterJobByLocation } from '@/lib/pipeline/filter';
+import { runAllFilterGates } from '@/lib/pipeline/filter';
+import { computeMatchScores, classifyTier } from '@/lib/pipeline/match-engine';
+import { runCVPipeline } from '@/lib/cv/pipeline';
+import { runOutreachPipeline } from '@/lib/outreach/pipeline';
+import { jobProcessingSemaphore } from '@/lib/pipeline/scrape';
 import { RawJob } from '@/lib/scrapers/types';
 
 export async function POST(request: NextRequest) {
@@ -67,8 +72,8 @@ Return ONLY the JSON.`;
       source: 'WhatsApp Community',
     };
 
-    // Apply location/salary filter
-    const filterResult = filterJobByLocation(rawJob);
+    // Apply full multi-gate filter (same as scrape pipeline)
+    const filterResult = await runAllFilterGates(rawJob);
 
     if (!filterResult.passed) {
       // Still save as rejected for tracking
@@ -81,7 +86,7 @@ Return ONLY the JSON.`;
           location: rawJob.location,
           source: 'WhatsApp Community',
           jobUrl: rawJob.url,
-          rejectReason: filterResult.rejectReason || 'Failed filter',
+          rejectReason: `[${filterResult.rejectGate}] ${filterResult.rejectReason || 'Failed filter'}`,
           createdAt: new Date().toISOString(),
         },
       });
@@ -89,11 +94,17 @@ Return ONLY the JSON.`;
       return NextResponse.json({
         status: 'rejected',
         reason: filterResult.rejectReason,
+        gate: filterResult.rejectGate,
         extracted,
       });
     }
 
-    // Insert to jobs table
+    // ---- Match Scoring (same as scrape pipeline) ----
+    const locFilter = filterResult.filterResult!;
+    const matchScores = await computeMatchScores(rawJob, locFilter, false);
+    const matchTier = classifyTier(matchScores.overallScore);
+
+    // Insert to jobs table with scoring data
     const job = await prisma.job.create({
       data: {
         sourceId: rawJob.sourceId,
@@ -101,11 +112,15 @@ Return ONLY the JSON.`;
         jobTitle: rawJob.title,
         company: rawJob.company,
         location: rawJob.location,
-        locationType: filterResult.category,
-        salaryDisplay: filterResult.salaryDisplay,
+        locationType: locFilter.category,
+        salaryDisplay: locFilter.salaryDisplay,
         source: 'WhatsApp Community',
         jobUrl: rawJob.url,
         jobDescription: rawJob.description,
+        locationPriority: locFilter.locationPriority,
+        overallScore: matchScores.overallScore,
+        matchScores: JSON.stringify(matchScores),
+        matchTier,
         createdAt: new Date().toISOString(),
       },
     });
@@ -113,7 +128,10 @@ Return ONLY the JSON.`;
     return NextResponse.json({
       status: 'accepted',
       job,
-      category: filterResult.category,
+      category: locFilter.category,
+      overallScore: matchScores.overallScore,
+      matchTier,
+      readyForTailor: true,
     });
   } catch (error) {
     console.error('[API] Manual paste error:', error);
