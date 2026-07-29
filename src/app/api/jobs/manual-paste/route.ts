@@ -16,17 +16,47 @@ import { RawJob } from '@/lib/scrapers/types';
 
 export async function POST(request: NextRequest) {
   try {
-    const { text } = await request.json();
+    const body = await request.json();
+    const { text, jobTitle, company, location, jobDescription, jobUrl } = body;
 
-    if (!text || text.trim().length < 20) {
+    // Support two input modes:
+    // Mode 1: Structured fields from Applications "Log Application" modal
+    // Mode 2: Raw text paste from WhatsApp/community
+    const isStructuredInput = jobTitle && company;
+
+    if (!isStructuredInput && (!text || text.trim().length < 20)) {
       return NextResponse.json(
-        { error: 'Please paste a meaningful job posting (at least 20 characters)' },
+        { error: 'Please paste a meaningful job posting (at least 20 characters) or provide jobTitle + company' },
         { status: 400 }
       );
     }
 
-    // Extract job info via AI
-    const prompt = `Extract job information from this pasted message. This was shared in a WhatsApp/community group.
+    let extracted: {
+      title: string;
+      company: string;
+      location: string;
+      description: string;
+      url: string;
+      salary: string;
+      salaryMin: number;
+      salaryMax: number;
+    };
+
+    if (isStructuredInput) {
+      // Structured input — skip AI extraction
+      extracted = {
+        title: jobTitle,
+        company,
+        location: location || 'Remote',
+        description: jobDescription || `Application for ${jobTitle} at ${company}`,
+        url: jobUrl || '',
+        salary: '',
+        salaryMin: 0,
+        salaryMax: 0,
+      };
+    } else {
+      // Raw text — use AI extraction
+      const prompt = `Extract job information from this pasted message. This was shared in a WhatsApp/community group.
 
 MESSAGE:
 ${text}
@@ -46,21 +76,22 @@ Return JSON:
 If salary is mentioned in LPA format (e.g., "6 LPA"), convert to annual: salaryMin = 600000.
 Return ONLY the JSON.`;
 
-    const response = await callAIStandard(prompt, { maxTokens: 300, temperature: 0.1 });
-    const extracted = parseAIJson<{
-      title: string;
-      company: string;
-      location: string;
-      description: string;
-      url: string;
-      salary: string;
-      salaryMin: number;
-      salaryMax: number;
-    }>(response);
+      const response = await callAIStandard(prompt, { maxTokens: 300, temperature: 0.1 });
+      extracted = parseAIJson<{
+        title: string;
+        company: string;
+        location: string;
+        description: string;
+        url: string;
+        salary: string;
+        salaryMin: number;
+        salaryMax: number;
+      }>(response);
+    }
 
     // Create RawJob for filter
     const rawJob: RawJob = {
-      sourceId: `whatsapp_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+      sourceId: `manual_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
       title: extracted.title,
       company: extracted.company,
       location: extracted.location,
@@ -69,7 +100,7 @@ Return ONLY the JSON.`;
       salaryMax: extracted.salaryMax || 0,
       url: extracted.url || '',
       datePosted: new Date().toISOString(),
-      source: 'WhatsApp Community',
+      source: isStructuredInput ? 'Manual Log' : 'WhatsApp Community',
     };
 
     // Apply full multi-gate filter (same as scrape pipeline)

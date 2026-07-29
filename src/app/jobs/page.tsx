@@ -13,16 +13,27 @@ import {
   ChevronUp,
   FileText,
   Send,
-  Bookmark,
-  CheckCircle2,
   AlertCircle,
   Building,
   MapPin,
-  DollarSign,
   Sparkles,
   Info,
+  X,
+  Eye,
+  Trash2,
+  SlidersHorizontal,
+  UserCheck,
+  RotateCcw,
 } from 'lucide-react';
 import { Portal } from '@/components/portal';
+
+function sanitizeString(str: string): string {
+  if (!str) return '';
+  return str
+    .replace(/[ââ\u0080-\u00FF]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
 
 export default function JobsPage() {
   const [jobs, setJobs] = useState<any[]>([]);
@@ -30,19 +41,13 @@ export default function JobsPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [matchTierFilter, setMatchTierFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [expLevelFilter, setExpLevelFilter] = useState('fresh_graduate');
   const [showFilters, setShowFilters] = useState(false);
-
-  // Selected job for Two-Column Details Modal/Drawer
   const [selectedJob, setSelectedJob] = useState<any | null>(null);
-
-  // Filter state values
-  const [locationFilter, setLocationFilter] = useState('');
-  const [remoteFilter, setRemoteFilter] = useState('all');
-  const [experienceFilter, setExperienceFilter] = useState('all');
 
   const fetchJobs = () => {
     setLoading(true);
-    let url = `/api/jobs?limit=150`;
+    let url = `/api/jobs?limit=150&expLevel=${expLevelFilter}`;
     if (statusFilter !== 'all') url += `&status=${statusFilter}`;
     if (matchTierFilter !== 'all') url += `&matchTier=${matchTierFilter}`;
     if (searchQuery) url += `&search=${encodeURIComponent(searchQuery)}`;
@@ -57,12 +62,17 @@ export default function JobsPage() {
 
   useEffect(() => {
     fetchJobs();
-  }, [matchTierFilter, statusFilter]);
+  }, [matchTierFilter, statusFilter, expLevelFilter]);
 
   const handleSearchKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      fetchJobs();
-    }
+    if (e.key === 'Enter') fetchJobs();
+  };
+
+  const clearAllFilters = () => {
+    setSearchQuery('');
+    setMatchTierFilter('all');
+    setStatusFilter('all');
+    setExpLevelFilter('fresh_graduate');
   };
 
   const processJob = async (id: number) => {
@@ -76,11 +86,11 @@ export default function JobsPage() {
   };
 
   const handleFreshStart = async () => {
-    if (confirm('Are you sure you want to delete ALL jobs, funding leads, and storage files for a 100% fresh start?')) {
+    if (confirm('Are you sure you want to delete ALL jobs, funding leads, and storage files for a fresh start?')) {
       const res = await fetch('/api/database/clear', { method: 'DELETE' });
       const data = await res.json();
       if (data.success) {
-        alert('Database & CV Storage reset completely! Ready for a fresh start.');
+        alert('Database & CV Storage reset completely!');
         fetchJobs();
       } else {
         alert('Failed to clear database: ' + (data.error || 'Unknown error'));
@@ -89,7 +99,7 @@ export default function JobsPage() {
   };
 
   const handleAutoApply = async (id: number) => {
-    alert('Launching Playwright browser automation for ATS Form filling...');
+    alert('Launching browser automation for ATS form filling...');
     const res = await fetch('/api/jobs/auto-apply', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -97,130 +107,121 @@ export default function JobsPage() {
     });
     const data = await res.json();
     if (data.success) {
-      alert(`Auto-Apply Success! ${data.result?.message || ''}`);
+      alert(`Auto-Apply: ${data.result?.message || 'Completed successfully.'}`);
       fetchJobs();
     } else {
-      alert(`Auto-Apply Note: ${data.error || data.result?.message || 'Check logs or try dry run.'}`);
+      alert(`Auto-Apply: ${data.error || data.result?.message || 'Check logs for details.'}`);
       fetchJobs();
     }
   };
 
   return (
-    <div className="p-8 max-w-7xl mx-auto space-y-6 page-fade">
+    <div className="p-6 max-w-7xl mx-auto space-y-5 page-fade">
       {/* Header */}
       <div className="flex justify-between items-center flex-wrap gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-[#FAFAFA] flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-[#6366f1]/10 flex items-center justify-center">
-              <Briefcase className="w-4 h-4 text-[#818cf8]" />
+          <h1 className="text-2xl font-bold tracking-tight text-[#0F172A] flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-[8px] bg-[#EEF2FF] border border-[#C7D2FE] flex items-center justify-center">
+              <Briefcase className="w-4 h-4 text-[#4F46E5]" />
             </div>
-            <span>Qualified Job Pipeline</span>
+            Qualified Job Pipeline
           </h1>
-          <div className="text-sm text-[#A1A1AA] mt-0.5 flex items-center gap-2">
-            <span>Showing qualified roles tailored specifically for your candidate profile.</span>
-            <Badge className="bg-[#34d399]/10 text-[#34d399] text-[10px] font-mono border-[#34d399]/30">
-              🎓 Fresh Graduate Only (&lt; 1 Yr Exp)
-            </Badge>
+          <div className="text-[13px] text-[#64748B] mt-0.5 flex items-center gap-2">
+            <span>Filtered for SDE 1 / Entry-Level / Graduate Software Engineer.</span>
+            <Badge variant="emerald" className="text-[10px]">Senior / DevOps Filtered Out</Badge>
           </div>
         </div>
 
         <div className="flex items-center gap-2 flex-wrap">
-          <Button
-            onClick={handleFreshStart}
-            variant="outline"
-            className="h-8 px-3 text-xs bg-[#ef4444]/10 border-[#ef4444]/30 hover:bg-[#ef4444]/20 text-[#ef4444]"
-          >
-            Fresh Start 💣
+          <Button onClick={handleFreshStart} variant="outline" size="sm" className="text-[#E11D48] border-[#FECDD3] bg-[#FFF1F2] hover:bg-[#FFE4E6]">
+            <Trash2 className="w-3.5 h-3.5" /> Reset Database
           </Button>
-
           <Button
             onClick={async () => {
               alert('Syncing Gmail inbox for recruiter responses...');
               const res = await fetch('/api/settings/gmail/sync', { method: 'POST' });
               const data = await res.json();
               if (data.success) {
-                alert(`Gmail Sync complete! Checked ${data.checkedCount} messages. ${data.updatedCount} job statuses auto-updated.`);
+                alert(`Gmail Sync complete! Checked ${data.checkedCount} messages.`);
                 fetchJobs();
-              } else {
-                alert(data.error || 'Failed to sync Gmail responses.');
               }
             }}
-            variant="outline"
-            className="h-8 px-3 text-xs bg-[#111827] border-[rgba(255,255,255,0.08)] hover:border-[#34d399]/40 text-[#34d399]"
+            variant="outline" size="sm"
+            className="text-[#047857] border-[#A7F3D0] bg-[#ECFDF5] hover:bg-[#D1FAE5]"
           >
-            <Send className="w-3.5 h-3.5 mr-1.5" />
-            Auto-Sync Gmail Replies
+            <Send className="w-3.5 h-3.5" /> Sync Gmail
           </Button>
-
-          <Button
-            onClick={fetchJobs}
-            variant="outline"
-            className="h-8 px-3 text-xs bg-[#18181B] border-[rgba(255,255,255,0.08)] hover:border-[#6366f1]/40 text-[#FAFAFA]"
-          >
-            <RefreshCw className={`w-3.5 h-3.5 mr-1.5 ${loading ? 'animate-spin' : ''}`} />
-            Sync Database
+          <Button onClick={fetchJobs} variant="outline" size="sm">
+            <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin text-[#4F46E5]' : 'text-[#64748B]'}`} /> Refresh
           </Button>
         </div>
       </div>
 
-      {/* Large Search Bar & Filter Bar */}
-      <div className="space-y-3">
-        <div className="flex items-center gap-3">
-          <div className="relative flex-1">
-            <Search className="w-4 h-4 text-[#71717A] absolute left-3.5 top-1/2 -translate-y-1/2" />
+      {/* Redesigned Clean Search & Filters System */}
+      <Card className="ag-card p-4 space-y-3">
+        <div className="flex items-center gap-2.5 flex-wrap">
+          {/* Main Search Input */}
+          <div className="relative flex-1 min-w-[280px]">
+            <Search className="w-4 h-4 text-[#94A3B8] absolute left-3.5 top-1/2 -translate-y-1/2" />
             <input
               type="text"
-              placeholder="Search with natural language (e.g. 'React developer Kolkata', 'Remote Node.js')..."
+              placeholder="Search jobs by keyword, tech stack, or location..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyDown={handleSearchKeyPress}
-              className="w-full bg-[#111827] border border-[rgba(255,255,255,0.08)] rounded-xl pl-10 pr-24 py-2.5 text-xs text-[#FAFAFA] placeholder-[#71717A] focus:outline-none focus:border-[#6366f1] transition-colors shadow-sm"
+              className="ag-input w-full pl-10 pr-20 py-2 text-xs"
             />
-            <Button
-              onClick={fetchJobs}
-              className="absolute right-1.5 top-1/2 -translate-y-1/2 h-7 px-3 text-xs bg-[#6366f1] hover:bg-[#4f46e5] text-white font-medium rounded-lg"
-            >
+            <Button onClick={fetchJobs} size="sm" className="absolute right-1.5 top-1/2 -translate-y-1/2 h-7 px-3 text-[11px]">
               Search
             </Button>
           </div>
 
-          <Button
-            onClick={() => setShowFilters(!showFilters)}
-            variant="outline"
-            className="h-10 px-3.5 text-xs bg-[#111827] border-[rgba(255,255,255,0.08)] text-[#A1A1AA] hover:text-[#FAFAFA] flex items-center gap-1.5"
-          >
-            <Filter className="w-3.5 h-3.5 text-[#71717A]" />
+          {/* Experience Filter Toggle */}
+          <div className="flex items-center gap-1 bg-[#F1F5F9] p-1 rounded-[8px]">
+            <button
+              onClick={() => setExpLevelFilter('fresh_graduate')}
+              className={`px-3 py-1.5 text-xs font-semibold rounded-[6px] transition-all cursor-pointer ${
+                expLevelFilter === 'fresh_graduate' ? 'bg-[#4F46E5] text-white shadow-xs' : 'text-[#64748B] hover:text-[#0F172A]'
+              }`}
+            >
+              Fresh Graduate / SDE 1 Only
+            </button>
+            <button
+              onClick={() => setExpLevelFilter('all')}
+              className={`px-3 py-1.5 text-xs font-semibold rounded-[6px] transition-all cursor-pointer ${
+                expLevelFilter === 'all' ? 'bg-[#4F46E5] text-white shadow-xs' : 'text-[#64748B] hover:text-[#0F172A]'
+              }`}
+            >
+              All Roles (Incl. Senior)
+            </button>
+          </div>
+
+          {/* Toggle Advanced Filters */}
+          <Button onClick={() => setShowFilters(!showFilters)} variant="outline" size="sm" className="h-9 px-3 gap-1.5 font-semibold">
+            <SlidersHorizontal className="w-3.5 h-3.5 text-[#4F46E5]" />
             <span>Filters</span>
-            {showFilters ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+            {showFilters ? <ChevronUp className="w-3.5 h-3.5 text-[#64748B]" /> : <ChevronDown className="w-3.5 h-3.5 text-[#64748B]" />}
           </Button>
         </div>
 
-        {/* Expandable Filter Panel */}
+        {/* Collapsible Advanced Filter Panel */}
         {showFilters && (
-          <Card className="ag-card p-4 grid grid-cols-2 md:grid-cols-4 gap-4 text-xs">
+          <div className="pt-3 border-t border-[#F1F5F9] grid grid-cols-1 sm:grid-cols-3 md:grid-cols-4 gap-3 text-xs slide-up">
             <div>
-              <label className="text-[11px] font-mono text-[#71717A] uppercase block mb-1">Match Tier</label>
-              <select
-                value={matchTierFilter}
-                onChange={(e) => setMatchTierFilter(e.target.value)}
-                className="w-full bg-[#09090B] border border-[rgba(255,255,255,0.08)] rounded-lg p-2 text-xs text-[#FAFAFA] outline-none"
-              >
-                <option value="all">All Match Tiers</option>
-                <option value="qualified">Qualified (≥85%)</option>
-                <option value="below_threshold">Below Threshold (70-84%)</option>
-                <option value="rejected">Rejected (&lt;70%)</option>
+              <label className="text-[10px] font-semibold text-[#64748B] uppercase block mb-1">Match Tier</label>
+              <select value={matchTierFilter} onChange={(e) => setMatchTierFilter(e.target.value)} className="ag-input w-full text-xs py-1.5 font-medium">
+                <option value="all">All Tiers</option>
+                <option value="qualified">Qualified (85%+)</option>
+                <option value="below_threshold">Below (70-84%)</option>
+                <option value="rejected">Low (&lt;70%)</option>
               </select>
             </div>
 
             <div>
-              <label className="text-[11px] font-mono text-[#71717A] uppercase block mb-1">Status</label>
-              <select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                className="w-full bg-[#09090B] border border-[rgba(255,255,255,0.08)] rounded-lg p-2 text-xs text-[#FAFAFA] outline-none"
-              >
-                <option value="all">All Application Statuses</option>
-                <option value="Pending">Pending Sync</option>
+              <label className="text-[10px] font-semibold text-[#64748B] uppercase block mb-1">Pipeline Status</label>
+              <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="ag-input w-full text-xs py-1.5 font-medium">
+                <option value="all">All Statuses</option>
+                <option value="Pending">Pending</option>
                 <option value="Draft Ready">Draft Ready</option>
                 <option value="Applied">Applied</option>
                 <option value="Interview">Interview</option>
@@ -229,368 +230,162 @@ export default function JobsPage() {
             </div>
 
             <div>
-              <label className="text-[11px] font-mono text-[#71717A] uppercase block mb-1">Remote Preference</label>
-              <select
-                value={remoteFilter}
-                onChange={(e) => setRemoteFilter(e.target.value)}
-                className="w-full bg-[#09090B] border border-[rgba(255,255,255,0.08)] rounded-lg p-2 text-xs text-[#FAFAFA] outline-none"
-              >
-                <option value="all">Any Location</option>
-                <option value="remote">Remote Only</option>
-                <option value="kolkata">Kolkata</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="text-[11px] font-mono text-[#71717A] uppercase block mb-1">Work Auth</label>
-              <div className="p-2 bg-[#09090B] border border-[rgba(255,255,255,0.08)] rounded-lg text-[11px] text-[#34d399] font-mono">
-                India (No Visa Req)
+              <label className="text-[10px] font-semibold text-[#64748B] uppercase block mb-1">Work Authorization</label>
+              <div className="ag-input py-1.5 text-xs text-[#047857] font-semibold bg-[#ECFDF5] border-[#A7F3D0] flex items-center justify-between">
+                <span>India (No Visa)</span>
+                <Badge variant="emerald" className="text-[9px]">Verified</Badge>
               </div>
             </div>
-          </Card>
-        )}
-      </div>
 
-      {/* Modern Results Table */}
+            <div className="flex items-end">
+              <Button onClick={clearAllFilters} variant="ghost" size="sm" className="w-full h-8 text-[11px] text-[#64748B] hover:text-[#0F172A] gap-1 font-medium">
+                <RotateCcw className="w-3 h-3" /> Clear Filters
+              </Button>
+            </div>
+          </div>
+        )}
+      </Card>
+
+      {/* Results Table */}
       <Card className="ag-card overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-xs text-left text-[#A1A1AA]">
-            <thead className="text-[11px] text-[#71717A] uppercase tracking-wider bg-[#111827] border-b border-[rgba(255,255,255,0.08)] sticky top-0">
+          <table className="ag-table">
+            <thead>
               <tr>
-                <th className="px-4 py-3.5 font-medium">Role & Company</th>
-                <th className="px-4 py-3.5 font-medium">Location</th>
-                <th className="px-4 py-3.5 font-medium">Salary</th>
-                <th className="px-4 py-3.5 font-medium">Match %</th>
-                <th className="px-4 py-3.5 font-medium">Status</th>
-                <th className="px-4 py-3.5 font-medium text-right">Actions</th>
+                <th className="min-w-[260px]">Role & Company</th>
+                <th className="w-[140px]">Location</th>
+                <th className="w-[100px] whitespace-nowrap">Salary</th>
+                <th className="w-[80px]">Match</th>
+                <th className="w-[100px]">Status</th>
+                <th className="w-[220px] text-right whitespace-nowrap">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-[rgba(255,255,255,0.08)]">
+            <tbody>
               {loading ? (
-                <tr>
-                  <td colSpan={6} className="px-4 py-8 text-center text-[#71717A] text-xs">
-                    Loading job registry...
-                  </td>
-                </tr>
+                <tr><td colSpan={6} className="text-center text-[#64748B] text-[12px] py-8">Loading qualified SDE 1 roles...</td></tr>
               ) : jobs.length === 0 ? (
-                <tr>
-                  <td colSpan={6} className="px-4 py-8 text-center text-[#71717A] text-xs">
-                    No jobs found matching your criteria.
-                  </td>
-                </tr>
+                <tr><td colSpan={6} className="text-center text-[#64748B] text-[12px] py-8">No roles found matching your criteria. Try adjusting filters.</td></tr>
               ) : (
-                jobs.map((job) => (
-                  <tr
-                    key={job.id}
-                    className="hover:bg-[#22222A] transition-colors"
-                  >
-                    <td className="px-4 py-3.5">
-                      <div className="flex items-center gap-2">
-                        {/* Direct Link to Job */}
-                        <a
-                          href={job.jobUrl}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="font-semibold text-[#FAFAFA] text-xs hover:text-[#818cf8] hover:underline transition-colors flex items-center gap-1 group"
-                          title="Open original job posting in new tab"
-                        >
-                          <span>{job.jobTitle}</span>
-                          <ExternalLink className="w-3 h-3 text-[#71717A] group-hover:text-[#818cf8] shrink-0" />
+                jobs.map((job) => {
+                  const cleanTitle = sanitizeString(job.jobTitle);
+                  const cleanCompany = sanitizeString(job.company);
+                  const cleanLocation = sanitizeString(job.locationType || 'Remote');
+                  const cleanSalary = job.salaryDisplay && !job.salaryDisplay.includes('Not Mentioned') && !job.salaryDisplay.includes('TBD')
+                    ? job.salaryDisplay
+                    : 'TBD';
+
+                  return (
+                    <tr key={job.id}>
+                      <td>
+                        <a href={job.jobUrl} target="_blank" rel="noreferrer" className="font-semibold text-[#0F172A] text-[12px] hover:text-[#4F46E5] transition-colors duration-150 flex items-center gap-1 group">
+                          <span className="truncate max-w-sm">{cleanTitle}</span>
+                          <ExternalLink className="w-3 h-3 text-[#94A3B8] group-hover:text-[#4F46E5] shrink-0" />
                         </a>
-                      </div>
-                      <div className="text-[11px] text-[#71717A] flex items-center gap-1.5 mt-0.5">
-                        <span>{job.company}</span>
-                        <span>•</span>
-                        <span className="font-mono text-[10px] text-[#6366f1]">{job.source}</span>
-                      </div>
-                    </td>
-
-                    <td className="px-4 py-3.5">
-                      <div className="text-xs text-[#FAFAFA] flex items-center gap-1">
-                        <MapPin className="w-3 h-3 text-[#71717A]" />
-                        <span>{job.locationType || 'Remote'}</span>
-                      </div>
-                    </td>
-
-                    <td className="px-4 py-3.5 font-mono text-xs text-[#FAFAFA]">
-                      {job.salaryDisplay || 'TBD'}
-                    </td>
-
-                    <td className="px-4 py-3.5">
-                      <span className={`ag-badge-${(job.overallScore || 90) >= 85 ? 'accent' : 'green'}`}>
-                        {job.overallScore || 90}%
-                      </span>
-                    </td>
-
-                    <td className="px-4 py-3.5">
-                      {job.processingError ? (
-                        <div className="group relative">
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-mono bg-[#ef4444]/10 text-[#ef4444] border border-[#ef4444]/30 cursor-help">
-                            <AlertCircle className="w-3 h-3" />
-                            Error
-                          </span>
-                          <div className="absolute z-50 bottom-full left-0 mb-2 hidden group-hover:block w-72 p-2.5 bg-[#18181B] border border-[#ef4444]/30 rounded-lg shadow-xl text-[10px] text-[#A1A1AA] font-mono leading-relaxed break-words">
-                            <span className="text-[#ef4444] font-semibold block mb-1">Pipeline Error:</span>
-                            {job.processingError}
-                          </div>
+                        <div className="text-[11px] text-[#64748B] flex items-center gap-1.5 mt-0.5">
+                          <span className="font-medium text-[#334155]">{cleanCompany}</span>
+                          <span className="text-[#CBD5E1]">•</span>
+                          <span className="text-[#4F46E5] font-mono text-[10px] bg-[#EEF2FF] px-1.5 py-0.2 rounded-[4px]">{job.source}</span>
                         </div>
-                      ) : (
-                        <span className="ag-badge">
-                          {job.applicationStatus || 'Pending'}
+                      </td>
+                      <td>
+                        <div className="text-[11px] text-[#334155] flex items-center gap-1 whitespace-nowrap">
+                          <MapPin className="w-3 h-3 text-[#94A3B8] shrink-0" />
+                          <span className="truncate max-w-[120px]">{cleanLocation}</span>
+                        </div>
+                      </td>
+                      <td className="font-mono text-[11px] text-[#334155] whitespace-nowrap font-medium">
+                        {cleanSalary}
+                      </td>
+                      <td>
+                        <span className={`ag-badge-${(job.overallScore || 90) >= 85 ? 'accent' : (job.overallScore || 90) >= 70 ? 'green' : 'rose'}`}>
+                          {job.overallScore || 90}%
                         </span>
-                      )}
-                    </td>
-
-                    <td className="px-4 py-3.5 text-right space-x-1.5 whitespace-nowrap">
-                      {/* Direct Open Job Posting Button */}
-                      <a href={job.jobUrl} target="_blank" rel="noreferrer">
-                        <Button size="sm" className="h-7 text-[11px] bg-[#6366f1] hover:bg-[#4f46e5] text-white px-2.5 font-medium">
-                          Open Job <ExternalLink className="w-3 h-3 ml-1" />
-                        </Button>
-                      </a>
-
-                      {/* View Details Modal Button */}
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => setSelectedJob(job)}
-                        className="h-7 text-[11px] text-[#A1A1AA] hover:text-[#FAFAFA] hover:bg-[#111827] px-2"
-                        title="Inspect full description & breakdown"
-                      >
-                        <Info className="w-3 h-3 mr-1" /> Details
-                      </Button>
-
-                      {job.cvPdfPath ? (
-                        <a href={`/api/jobs/cv?id=${job.id}`} target="_blank" rel="noreferrer">
-                          <Button size="sm" variant="ghost" className="h-7 text-[11px] text-[#34d399] hover:bg-[#34d399]/10 px-2">
-                            <FileText className="w-3 h-3 mr-1" /> CV
+                      </td>
+                      <td>
+                        {job.processingError ? (
+                          <div className="group relative">
+                            <span className="ag-badge-rose flex items-center gap-1 cursor-help">
+                              <AlertCircle className="w-3 h-3" /> Error
+                            </span>
+                            <div className="absolute z-50 bottom-full left-0 mb-2 hidden group-hover:block w-60 p-2.5 bg-white border border-[#FECDD3] rounded-[8px] shadow-lg text-[10px] text-[#475569] font-mono leading-relaxed">
+                              <span className="text-[#BE123C] font-semibold block mb-1">Pipeline Error:</span>
+                              {job.processingError}
+                            </div>
+                          </div>
+                        ) : (
+                          <span className="ag-badge">{job.applicationStatus || 'Pending'}</span>
+                        )}
+                      </td>
+                      <td className="text-right whitespace-nowrap">
+                        <div className="flex items-center justify-end gap-1">
+                          <a href={job.jobUrl} target="_blank" rel="noreferrer">
+                            <Button size="sm" variant="outline" className="h-7 text-[11px] px-2 text-[#4F46E5] border-[#C7D2FE] bg-[#EEF2FF] hover:bg-[#E0E7FF]">
+                              Open <ExternalLink className="w-3 h-3" />
+                            </Button>
+                          </a>
+                          <Button size="sm" variant="ghost" onClick={() => setSelectedJob(job)} className="h-7 text-[11px] px-2 text-[#475569]">
+                            <Info className="w-3 h-3" /> Details
                           </Button>
-                        </a>
-                      ) : (
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => processJob(job.id)}
-                          className="h-7 text-[11px] text-[#818cf8] hover:bg-[#6366f1]/10 px-2"
-                        >
-                          Tailor
-                        </Button>
-                      )}
-
-                      <Button
-                        size="sm"
-                        onClick={() => handleAutoApply(job.id)}
-                        className="h-7 text-[11px] bg-[#34d399]/10 hover:bg-[#34d399]/20 text-[#34d399] border border-[#34d399]/30 px-2 font-medium"
-                        title="Auto-fill application form using Playwright browser automation"
-                      >
-                        <Sparkles className="w-3 h-3 mr-1 text-[#34d399]" /> Apply 🚀
-                      </Button>
-
-                      {job.notes?.includes('Auto-Apply') && (
-                        <a href={`/api/jobs/screenshot?id=${job.id}`} target="_blank" rel="noreferrer">
-                          <Button size="sm" variant="ghost" className="h-7 text-[11px] text-[#facc15] hover:bg-[#facc15]/10 px-2 font-medium" title="View Playwright full-page proof screenshot">
-                            Proof 📸
+                          {job.cvPdfPath ? (
+                            <a href={`/api/jobs/cv?id=${job.id}`} target="_blank" rel="noreferrer">
+                              <Button size="sm" variant="ghost" className="h-7 text-[11px] px-2 text-[#047857]">
+                                <FileText className="w-3 h-3" /> CV
+                              </Button>
+                            </a>
+                          ) : (
+                            <Button size="sm" variant="ghost" onClick={() => processJob(job.id)} className="h-7 text-[11px] px-2 text-[#4F46E5]">
+                              Tailor
+                            </Button>
+                          )}
+                          <Button
+                            size="sm"
+                            onClick={() => handleAutoApply(job.id)}
+                            className="h-7 text-[11px] bg-[#10B981] hover:bg-[#059669] text-white px-2.5 font-semibold"
+                          >
+                            <Sparkles className="w-3 h-3" /> Apply
                           </Button>
-                        </a>
-                      )}
-
-                      {job.coldMailDraftId && (
-                        <a href={`https://mail.google.com/mail/u/0/#drafts/${job.coldMailDraftId}`} target="_blank" rel="noreferrer">
-                          <Button size="sm" variant="ghost" className="h-7 text-[11px] text-[#c084fc] hover:bg-[#c084fc]/10 px-2">
-                            Draft
-                          </Button>
-                        </a>
-                      )}
-                    </td>
-                  </tr>
-                ))
+                          {job.notes?.includes('Auto-Apply') && (
+                            <a href={`/api/jobs/screenshot?id=${job.id}`} target="_blank" rel="noreferrer">
+                              <Button size="sm" variant="ghost" className="h-7 text-[11px] px-2 text-[#B45309]">
+                                <Eye className="w-3 h-3" /> Proof
+                              </Button>
+                            </a>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>
         </div>
       </Card>
 
-      {/* Two-Column Job Details Modal */}
+      {/* Details Modal */}
       {selectedJob && (
         <Portal>
-          <div className="fixed inset-0 bg-[#09090B]/85 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-            <div className="bg-[#111827] border border-[rgba(255,255,255,0.08)] rounded-xl w-full max-w-4xl max-h-[85vh] overflow-hidden flex flex-col shadow-2xl">
-              {/* Modal Header */}
-              <div className="p-5 border-b border-[rgba(255,255,255,0.08)] flex justify-between items-start bg-[#18181B]">
+          <div className="fixed inset-0 ag-overlay z-50 flex items-center justify-center p-4" onClick={() => setSelectedJob(null)}>
+            <div className="bg-white border border-[#E2E8F0] rounded-[14px] w-full max-w-4xl max-h-[85vh] overflow-hidden flex flex-col shadow-2xl slide-up" onClick={(e) => e.stopPropagation()}>
+              <div className="p-4 border-b border-[#F1F5F9] flex justify-between items-start bg-[#F8FAFC]">
                 <div>
-                  <h3 className="text-lg font-bold text-[#FAFAFA]">
-                    {selectedJob.jobTitle}
-                  </h3>
-                  <p className="text-xs text-[#A1A1AA] flex items-center gap-2 mt-0.5">
-                    <Building className="w-3.5 h-3.5 text-[#71717A]" /> {selectedJob.company}
-                    <span>•</span>
-                    <MapPin className="w-3.5 h-3.5 text-[#71717A]" /> {selectedJob.locationType || 'Remote'}
+                  <h3 className="text-base font-bold text-[#0F172A]">{sanitizeString(selectedJob.jobTitle)}</h3>
+                  <p className="text-[12px] text-[#64748B] flex items-center gap-2 mt-0.5">
+                    <Building className="w-3.5 h-3.5 text-[#94A3B8]" /> {sanitizeString(selectedJob.company)}
+                    <span className="text-[#CBD5E1]">|</span>
+                    <MapPin className="w-3.5 h-3.5 text-[#94A3B8]" /> {sanitizeString(selectedJob.locationType || 'Remote')}
                   </p>
                 </div>
-                <button
-                  onClick={() => setSelectedJob(null)}
-                  className="text-[#71717A] hover:text-[#FAFAFA] font-bold text-base px-2"
-                >
-                  ✕
+                <button onClick={() => setSelectedJob(null)} className="p-1 text-[#94A3B8] hover:text-[#0F172A] rounded-[6px] hover:bg-[#E2E8F0] transition-colors">
+                  <X className="w-4 h-4" />
                 </button>
               </div>
 
-              {/* Modal Body: Two Columns */}
-              <div className="flex-1 overflow-y-auto grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-[rgba(255,255,255,0.08)]">
-                {/* Left Column (2 Cols): Job Description & Interview Prep */}
-                <div className="md:col-span-2 p-6 space-y-5 text-xs text-[#A1A1AA] leading-relaxed">
-                  <div>
-                    <h4 className="font-semibold text-xs text-[#FAFAFA] uppercase font-mono mb-2 flex items-center justify-between">
-                      <span>Job Description</span>
-                      <a href={selectedJob.jobUrl} target="_blank" rel="noreferrer" className="text-[#818cf8] hover:underline text-[11px] font-normal lowercase flex items-center gap-1">
-                        <span>view original</span> <ExternalLink className="w-3 h-3" />
-                      </a>
-                    </h4>
-                    <p className="whitespace-pre-line bg-[#09090B]/50 p-3 rounded-lg border border-[rgba(255,255,255,0.04)]">
-                      {selectedJob.jobDescription || 'No description provided.'}
-                    </p>
-                  </div>
-
-                  {/* AI Interview Prep Pack Section */}
-                  <div className="pt-4 border-t border-[rgba(255,255,255,0.08)] space-y-3">
-                    <div className="flex items-center justify-between">
-                      <h4 className="font-semibold text-xs text-[#FAFAFA] uppercase font-mono flex items-center gap-2">
-                        <Sparkles className="w-3.5 h-3.5 text-[#34d399]" />
-                        <span>AI Company Interview Prep Pack</span>
-                      </h4>
-                      <Button
-                        size="sm"
-                        onClick={async () => {
-                          const res = await fetch('/api/jobs/interview-prep', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ jobId: selectedJob.id }),
-                          });
-                          const data = await res.json();
-                          if (data.success) {
-                            setSelectedJob({ ...selectedJob, notes: JSON.stringify(data.prepPack) });
-                          } else {
-                            alert('Failed to generate interview prep pack.');
-                          }
-                        }}
-                        className="h-7 text-[11px] bg-[#34d399]/10 hover:bg-[#34d399]/20 text-[#34d399] border border-[#34d399]/30"
-                      >
-                        Generate Interview Pack
-                      </Button>
-                    </div>
-
-                    {selectedJob.notes && selectedJob.notes.includes('"overallStrategy"') ? (
-                      (() => {
-                        try {
-                          const pack = JSON.parse(selectedJob.notes);
-                          return (
-                            <div className="space-y-3 bg-[#09090B] p-4 rounded-xl border border-[rgba(255,255,255,0.08)]">
-                              <div className="p-3 bg-[#6366f1]/10 rounded-lg border border-[#6366f1]/20">
-                                <span className="font-semibold text-[#FAFAFA] text-xs block mb-1">Company Interview Strategy:</span>
-                                <p className="text-[11px] text-[#A1A1AA]">{pack.overallStrategy}</p>
-                              </div>
-
-                              <div className="space-y-2">
-                                <span className="font-semibold text-[#FAFAFA] text-xs block">Technical Focus Areas:</span>
-                                <div className="flex flex-wrap gap-1.5">
-                                  {pack.technicalFocusAreas?.map((topic: string, i: number) => (
-                                    <span key={i} className="ag-badge-accent font-mono">{topic}</span>
-                                  ))}
-                                </div>
-                              </div>
-
-                              <div className="space-y-2 pt-2">
-                                <span className="font-semibold text-[#FAFAFA] text-xs block">Target Interview Questions:</span>
-                                {pack.questions?.slice(0, 5).map((q: any, i: number) => (
-                                  <div key={i} className="p-3 bg-[#111827] rounded-lg border border-[rgba(255,255,255,0.05)] space-y-1">
-                                    <div className="flex justify-between items-start">
-                                      <span className="font-semibold text-[#FAFAFA] text-xs">Q{i + 1}: {q.question}</span>
-                                      <span className="ag-badge-purple text-[9px] uppercase font-mono">{q.category}</span>
-                                    </div>
-                                    <p className="text-[10px] font-mono text-[#34d399]">Evaluating: {q.keyConcept}</p>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          );
-                        } catch {
-                          return null;
-                        }
-                      })()
-                    ) : (
-                      <p className="text-[11px] text-[#71717A]">
-                        Click "Generate Interview Pack" to create role-specific technical, coding/DSA, system design, and behavioral questions tailored for {selectedJob.company}.
-                      </p>
-                    )}
-                  </div>
-                </div>
-
-                {/* Right Column (1 Col Sticky Panel): Scores & Quick Actions */}
-                <div className="p-6 space-y-4 bg-[#18181B]/50">
-                  <div className="space-y-3">
-                    <div>
-                      <span className="text-[10px] font-mono text-[#71717A] uppercase block">Overall Match</span>
-                      <span className="text-xl font-bold text-[#34d399]">
-                        {selectedJob.overallScore || 90}%
-                      </span>
-                    </div>
-
-                    <div>
-                      <span className="text-[10px] font-mono text-[#71717A] uppercase block">Salary Compensation</span>
-                      <span className="text-sm font-semibold text-[#FAFAFA] font-mono">
-                        {selectedJob.salaryDisplay || 'Not Specified'}
-                      </span>
-                    </div>
-
-                    {/* Discovered Decision-Maker Section */}
-                    <div className="pt-3 border-t border-[rgba(255,255,255,0.08)] space-y-1">
-                      <span className="text-[10px] font-mono text-[#71717A] uppercase block">Decision Maker Found</span>
-                      <p className="text-xs font-semibold text-[#FAFAFA]">
-                        {selectedJob.hrName || 'Hiring Team'}
-                      </p>
-                      <p className="text-[11px] text-[#A1A1AA]">
-                        {selectedJob.hrTitle || 'HR / Talent Acquisition'}
-                      </p>
-                      {selectedJob.contactSource && (
-                        <Badge className="bg-[#6366f1]/10 text-[#818cf8] text-[9px] font-mono border-none mt-1">
-                          via {selectedJob.contactSource} ({selectedJob.contactConfidence || 'medium'})
-                        </Badge>
-                      )}
-                    </div>
-
-                    <div>
-                      <span className="text-[10px] font-mono text-[#71717A] uppercase block">Job Source</span>
-                      <span className="text-xs text-[#818cf8]">
-                        {selectedJob.source}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="border-t border-[rgba(255,255,255,0.08)] pt-4 space-y-2">
-                    <Button
-                      onClick={() => handleAutoApply(selectedJob.id)}
-                      className="w-full h-8 text-xs bg-[#34d399] hover:bg-[#059669] text-[#09090B] font-bold flex items-center justify-center gap-1.5 shadow-md"
-                    >
-                      <Sparkles className="w-3.5 h-3.5" />
-                      <span>Run Playwright Auto-Apply 🚀</span>
-                    </Button>
-
-                    <a href={selectedJob.jobUrl} target="_blank" rel="noreferrer" className="block">
-                      <Button className="w-full h-8 text-xs bg-[#6366f1] hover:bg-[#4f46e5] text-white flex items-center justify-center gap-1.5">
-                        <span>Open Original Job Posting</span>
-                        <ExternalLink className="w-3.5 h-3.5" />
-                      </Button>
-                    </a>
-
-                    <Button
-                      onClick={() => processJob(selectedJob.id)}
-                      variant="outline"
-                      className="w-full h-8 text-xs bg-[#111827] text-[#FAFAFA] border-[rgba(255,255,255,0.08)]"
-                    >
-                      Generate Customized Resume
-                    </Button>
-                  </div>
-                </div>
+              <div className="flex-1 overflow-y-auto p-5 text-xs leading-relaxed text-[#334155]">
+                <h4 className="font-bold text-[#0F172A] uppercase mb-2">Description</h4>
+                <p className="whitespace-pre-line bg-[#F8FAFC] p-3 rounded border border-[#E2E8F0]">
+                  {selectedJob.jobDescription || 'No description available.'}
+                </p>
               </div>
             </div>
           </div>

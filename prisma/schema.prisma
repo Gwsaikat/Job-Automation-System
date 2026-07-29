@@ -141,3 +141,24 @@ model RejectedJob {
 
   @@map("rejected_jobs")
 }
+
+model NetworkingPost {
+  id            Int     @id @default(autoincrement())
+  postType      String  @map("post_type")  // 'discussion' | 'market_gap'
+  author        String
+  avatar        String  @default("SM")
+  companyOrRole String? @map("company_or_role")
+  title         String
+  content       String
+  category      String  @default("General")
+  painPoint     String? @map("pain_point")
+  suggestedSolution String? @map("suggested_solution")
+  targetAudience String? @map("target_audience")
+  status        String  @default("Open")
+  upvotes       Int     @default(0)
+  commentsCount Int     @default(0) @map("comments_count")
+  createdAt     String  @default("") @map("created_at")
+
+  @@map("networking_posts")
+}
+

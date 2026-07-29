@@ -1,8 +1,7 @@
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
-import { Sidebar } from '@/components/sidebar';
-import { Topbar } from '@/components/topbar';
+import { AppShell } from '@/components/app-shell';
 
 const inter = Inter({ subsets: ['latin'], weight: ['300', '400', '500', '600', '700'] });
 
@@ -17,15 +16,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="dark">
-      <body className={`${inter.className} min-h-screen bg-[#09090B] text-[#FAFAFA] flex overflow-x-hidden antialiased`}>
-        <Sidebar />
-        <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-          <Topbar />
-          <main className="flex-1 overflow-y-auto page-fade bg-[#09090B]">
-            {children}
-          </main>
-        </div>
+    <html lang="en">
+      <body className={`${inter.className} min-h-screen bg-[#F8FAFC] text-[#0F172A] antialiased`}>
+        <AppShell>{children}</AppShell>
       </body>
     </html>
   );

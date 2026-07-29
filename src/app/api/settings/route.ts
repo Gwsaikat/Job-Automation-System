@@ -1,5 +1,5 @@
 // ============================================
-// Settings API — CV Template & API Key Status
+// Settings API — CV Template, API Key Storage & Status
 // ============================================
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -8,6 +8,13 @@ import { isKeyConfigured, getConfig } from '@/lib/config';
 import { isGmailConnected } from '@/lib/outreach/gmail';
 
 export const dynamic = 'force-dynamic';
+
+// All API key names that can be stored in the database
+const API_KEY_NAMES = [
+  'ADZUNA_APP_ID', 'ADZUNA_APP_KEY', 'RAPIDAPI_KEY', 'SERPER_API_KEY',
+  'OPENROUTER_API_KEY', 'GROQ_API_KEY1', 'GROQ_API_KEY2', 'GROQ_API_KEY3',
+  'APOLLO_API_KEY', 'TELEGRAM_BOT_TOKEN', 'GOOGLE_CLIENT_ID', 'GOOGLE_CLIENT_SECRET',
+];
 
 export async function GET() {
   try {
@@ -34,7 +41,7 @@ export async function GET() {
       where: { key: 'serper_credits_remaining' },
     });
 
-    // Just check if they exist in env for the frontend status indicators
+    // Check env-based API key status
     const apiKeys = {
       adzuna: isKeyConfigured('ADZUNA_APP_ID') && isKeyConfigured('ADZUNA_APP_KEY'),
       rapidApi: isKeyConfigured('RAPIDAPI_KEY'),
@@ -45,6 +52,23 @@ export async function GET() {
       telegram: isKeyConfigured('TELEGRAM_BOT_TOKEN'),
     };
 
+    // Load stored API keys from database (return masked values)
+    const storedApiKeys: Record<string, string> = {};
+    for (const keyName of API_KEY_NAMES) {
+      const dbKey = `api_key_${keyName}`;
+      const setting = await prisma.settings.findUnique({ where: { key: dbKey } });
+      if (setting?.value && setting.value.trim().length > 0) {
+        storedApiKeys[keyName] = setting.value;
+      }
+    }
+
+    // Profile settings
+    const githubUsernameSetting = await prisma.settings.findUnique({ where: { key: 'profile_github_username' } });
+    const leetcodeUsernameSetting = await prisma.settings.findUnique({ where: { key: 'profile_leetcode_username' } });
+    const codeforcesUsernameSetting = await prisma.settings.findUnique({ where: { key: 'profile_codeforces_username' } });
+    const targetRoleSetting = await prisma.settings.findUnique({ where: { key: 'profile_target_role' } });
+    const targetLocationSetting = await prisma.settings.findUnique({ where: { key: 'profile_target_location' } });
+
     return NextResponse.json({
       masterCvHtml: masterCvSetting?.value || '',
       masterCvLatex: masterCvLatex?.value || '',
@@ -52,7 +76,15 @@ export async function GET() {
       gmailConnected,
       gmailEmail: gmailEmail?.value || null,
       apiKeys,
+      storedApiKeys,
       serperCreditsRemaining: serperCredits?.value ? parseInt(serperCredits.value, 10) : null,
+      profile: {
+        githubUsername: githubUsernameSetting?.value || '',
+        leetcodeUsername: leetcodeUsernameSetting?.value || '',
+        codeforcesUsername: codeforcesUsernameSetting?.value || '',
+        targetRole: targetRoleSetting?.value || 'Full Stack Developer',
+        targetLocation: targetLocationSetting?.value || 'India / Remote',
+      },
     });
   } catch (error) {
     console.error('[API] Settings GET error:', error);
@@ -62,7 +94,27 @@ export async function GET() {
 
 export async function PUT(request: NextRequest) {
   try {
-    const { masterCvHtml, masterCvLatex, cvType } = await request.json();
+    const body = await request.json();
+    const { masterCvHtml, masterCvLatex, cvType, apiKeys, profile } = body;
+
+    if (profile && typeof profile === 'object') {
+      const keysMap: Record<string, string> = {
+        githubUsername: 'profile_github_username',
+        leetcodeUsername: 'profile_leetcode_username',
+        codeforcesUsername: 'profile_codeforces_username',
+        targetRole: 'profile_target_role',
+        targetLocation: 'profile_target_location',
+      };
+      for (const [prop, dbKey] of Object.entries(keysMap)) {
+        if (profile[prop] !== undefined) {
+          await prisma.settings.upsert({
+            where: { key: dbKey },
+            update: { value: String(profile[prop]).trim() },
+            create: { key: dbKey, value: String(profile[prop]).trim() },
+          });
+        }
+      }
+    }
 
     if (masterCvHtml !== undefined) {
       await prisma.settings.upsert({
@@ -86,6 +138,27 @@ export async function PUT(request: NextRequest) {
         update: { value: cvType },
         create: { key: 'cv_type', value: cvType },
       });
+    }
+
+    // Save/update API keys in the database
+    if (apiKeys && typeof apiKeys === 'object') {
+      for (const [keyName, keyValue] of Object.entries(apiKeys)) {
+        if (!API_KEY_NAMES.includes(keyName)) continue;
+        const dbKey = `api_key_${keyName}`;
+        const value = String(keyValue || '').trim();
+
+        if (value.length === 0) {
+          // Delete the key from DB
+          await prisma.settings.deleteMany({ where: { key: dbKey } });
+        } else {
+          // Upsert the key
+          await prisma.settings.upsert({
+            where: { key: dbKey },
+            update: { value },
+            create: { key: dbKey, value },
+          });
+        }
+      }
     }
 
     return NextResponse.json({ success: true });

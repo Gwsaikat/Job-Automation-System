@@ -1,19 +1,27 @@
 // ============================================
 // Jobs API — list, filter, update status
+// Dynamic Experience Level & Title Filtering
 // ============================================
 
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/db';
 
+const EXCLUDED_SENIOR_KEYWORDS = [
+  'senior', 'sr.', 'lead', 'principal', 'staff', 'manager', 'architect',
+  'devops', 'devsecops', 'sysadmin', 'director', 'vp', 'head of',
+  '5+ years', '7+ years', '8+ years', '10+ years',
+];
+
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get('page') || '1');
-    const limit = parseInt(searchParams.get('limit') || '50');
+    const limit = parseInt(searchParams.get('limit') || '150');
     const status = searchParams.get('status');
     const source = searchParams.get('source');
     const search = searchParams.get('search');
     const matchTier = searchParams.get('matchTier');
+    const expLevel = searchParams.get('expLevel') || 'fresh_graduate'; // 'fresh_graduate' | 'all'
     const sortBy = searchParams.get('sortBy') || 'overallScore';
     const sortOrder = (searchParams.get('sortOrder') || 'desc') as 'asc' | 'desc';
 
@@ -35,23 +43,32 @@ export async function GET(request: NextRequest) {
       ];
     }
 
-    const [jobs, total] = await Promise.all([
+    const [allJobs, totalCount] = await Promise.all([
       prisma.job.findMany({
         where,
         orderBy: { [sortBy]: sortOrder },
-        skip: (page - 1) * limit,
-        take: limit,
       }),
       prisma.job.count({ where }),
     ]);
 
+    // If expLevel is fresh_graduate (default), strictly filter out Senior / Lead / DevOps / Staff titles
+    let filteredJobs = allJobs;
+    if (expLevel === 'fresh_graduate') {
+      filteredJobs = allJobs.filter((job) => {
+        const titleLower = (job.jobTitle || '').toLowerCase();
+        return !EXCLUDED_SENIOR_KEYWORDS.some((kw) => titleLower.includes(kw));
+      });
+    }
+
+    const paginatedJobs = filteredJobs.slice((page - 1) * limit, page * limit);
+
     return NextResponse.json({
-      jobs,
+      jobs: paginatedJobs,
       pagination: {
         page,
         limit,
-        total,
-        totalPages: Math.ceil(total / limit),
+        total: filteredJobs.length,
+        totalPages: Math.ceil(filteredJobs.length / limit),
       },
     });
   } catch (error) {
@@ -72,7 +89,6 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: 'Job ID required' }, { status: 400 });
     }
 
-    // Only allow updating certain fields
     const allowedFields = [
       'applicationStatus', 'notes', 'coldMailSent', 'coldMailSentDate',
     ];
